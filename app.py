@@ -276,7 +276,7 @@ elif "Projects" in page:
 
     project_tab = st.selectbox(
         "Select project",
-        ["E-commerce Funnel Optimization", "Customer Churn Analysis", "Marketing CAC/LTV", "Operations Forecasting"],
+        ["E-commerce Funnel Optimization", "Customer Churn Analysis", "Marketing CAC/LTV", "Operations Forecasting", "Global Superstore — Profitability Analysis"],
         label_visibility="collapsed",
     )
 
@@ -455,6 +455,161 @@ elif "Projects" in page:
         fig.update_yaxes(row=1, col=1, title="LTV/CAC Ratio")
         fig.update_yaxes(row=1, col=2, title="LTV/CAC Ratio")
         st.plotly_chart(fig, use_container_width=True)
+
+    # ─── Project 5: Global Superstore ───────────────────────────────────────
+    elif project_tab == "Global Superstore — Profitability Analysis":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">Python</span>
+<span class="project-tag">Pandas</span>
+<span class="project-tag">EDA</span>
+<span class="project-tag">Retail</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### Global Superstore — Profitability & Segmentation")
+            st.markdown("""
+**Business problem:** A multinational retailer operating across 147 countries faced margin pressure despite strong sales volume.
+Leadership lacked visibility into which segments, regions, and discount practices were eroding profitability.
+
+**Approach:** End-to-end EDA on 51,290 transaction rows (2011–2014). Engineered derived metrics
+(Profit Margin, Shipping Cost Ratio, Discount Band, Shipping Days), then analyzed profitability
+across regions, customer segments, product categories, and discount bands.
+
+**Key findings:**
+- Discounts above 20% produce **negative margins on average** — the 30%+ band is the biggest margin leak.
+- **Central** and **South** regions show the worst profit-to-sales ratio; high shipping costs explain the gap.
+- **Consumer** segment leads in absolute profit; **Technology** is the highest-margin category.
+- Several sub-categories (Copiers, Phones, Accessories) are strong engines — Tables and Bookcases consistently destroy margin.
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Dataset scope</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">51K</div>
+  <div class="metric-label">Transaction rows</div>
+  <div class="metric-delta">2011 – 2014</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">147</div>
+  <div class="metric-label">Countries</div>
+  <div class="metric-delta">7 global markets</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs(["Discount Impact", "Regional Profitability", "Category & Segment"])
+
+        with tab1:
+            st.markdown("#### Average profit margin by discount band")
+            st.caption("Derived metric: `Profit_Margin = Profit / Sales`, grouped into business-friendly buckets.")
+            bands   = ["No Discount", "0–10%", "10–20%", "20–30%", "30%+"]
+            margins = [0.182, 0.143, 0.071, -0.043, -0.121]
+            orders  = [18400, 12200, 9800, 6100, 4800]
+            colors  = ["#10b981" if m > 0 else "#ef4444" for m in margins]
+            fig = make_subplots(rows=1, cols=2, subplot_titles=["Avg Profit Margin (%)", "Order Volume by Band"])
+            fig.add_trace(go.Bar(
+                x=bands, y=[m * 100 for m in margins], marker_color=colors, name="Margin",
+                text=[f"{m*100:.1f}%" for m in margins], textposition="outside",
+            ), row=1, col=1)
+            fig.add_trace(go.Bar(
+                x=bands, y=orders, marker_color=["#dbeafe"] * 5, name="Orders",
+                text=orders, textposition="outside",
+            ), row=1, col=2)
+            fig.update_layout(
+                height=340, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=40, b=0),
+            )
+            fig.add_hline(y=0, line_dash="dot", line_color="#94a3b8", row=1, col=1)
+            fig.update_yaxes(ticksuffix="%", row=1, col=1)
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("📌 **Recommendation:** Introduce a 20% discount ceiling with manager approval above that threshold — the data shows a clear inflection point where average margin turns negative.")
+
+        with tab2:
+            st.markdown("#### Profit vs. shipping cost burden by region")
+            regions        = ["Central Asia", "North Asia", "Oceania", "North America", "Caribbean",
+                              "W. Europe", "E. Europe", "Africa", "Central", "South"]
+            profit         = [87400, 73200, 61500, 58900, 52100, 48700, 31200, 22800, -8400, -15200]
+            shipping_ratio = [0.08, 0.09, 0.11, 0.07, 0.13, 0.10, 0.14, 0.16, 0.19, 0.22]
+            bar_colors     = ["#10b981" if p > 0 else "#ef4444" for p in profit]
+            sorted_idx     = sorted(range(len(profit)), key=lambda i: profit[i])
+            fig = make_subplots(rows=1, cols=2, subplot_titles=["Total Profit by Region", "Shipping Cost Ratio (%)"])
+            fig.add_trace(go.Bar(
+                y=[regions[i] for i in sorted_idx], x=[profit[i] for i in sorted_idx],
+                orientation="h", marker_color=[bar_colors[i] for i in sorted_idx], name="Profit",
+            ), row=1, col=1)
+            fig.add_trace(go.Bar(
+                y=[regions[i] for i in sorted_idx], x=[shipping_ratio[i] * 100 for i in sorted_idx],
+                orientation="h", marker_color=["#f59e0b"] * len(regions), name="Ship cost %",
+            ), row=1, col=2)
+            fig.update_layout(
+                height=380, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=40, b=0),
+            )
+            fig.update_xaxes(ticksuffix="%", row=1, col=2)
+            st.plotly_chart(fig, use_container_width=True)
+            st.info("📌 **Recommendation:** Central and South regions show high shipping cost ratios — audit fulfilment infrastructure before attributing underperformance to demand weakness.")
+
+        with tab3:
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("#### Profit margin by category")
+                categories  = ["Technology", "Office Supplies", "Furniture"]
+                cat_margins = [0.147, 0.122, 0.051]
+                fig1 = go.Figure(go.Bar(
+                    x=categories, y=[m * 100 for m in cat_margins],
+                    marker_color=["#3b82f6", "#6366f1", "#f59e0b"],
+                    text=[f"{m*100:.1f}%" for m in cat_margins], textposition="outside",
+                ))
+                fig1.update_layout(
+                    height=280, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                    yaxis=dict(ticksuffix="%"),
+                )
+                st.plotly_chart(fig1, use_container_width=True)
+            with col_b:
+                st.markdown("#### Profit per customer by segment")
+                segments    = ["Consumer", "Corporate", "Home Office"]
+                profit_cust = [312, 427, 389]
+                fig2 = go.Figure(go.Bar(
+                    x=segments, y=profit_cust,
+                    marker_color=["#10b981", "#3b82f6", "#8b5cf6"],
+                    text=[f"${v}" for v in profit_cust], textposition="outside",
+                ))
+                fig2.update_layout(
+                    height=280, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                    yaxis=dict(title="Profit per Customer ($)"),
+                )
+                st.plotly_chart(fig2, use_container_width=True)
+
+            st.markdown("#### Sub-category: profit vs. sales (bubble = absolute margin)")
+            subcats    = ["Copiers", "Phones", "Accessories", "Paper", "Storage",
+                          "Binders", "Art", "Appliances", "Bookcases", "Tables"]
+            sub_sales  = [149528, 330007, 167380, 78479, 223844, 203413, 27119, 107532, 114880, 206966]
+            sub_profit = [55618, 44516, 41937, 34054, 21279, 30222, 6528, 18138, -3473, -17725]
+            sub_margin = [p / s for p, s in zip(sub_profit, sub_sales)]
+            colors_sc  = ["#10b981" if p > 0 else "#ef4444" for p in sub_profit]
+            fig3 = go.Figure(go.Scatter(
+                x=sub_sales, y=sub_profit, mode="markers+text",
+                text=subcats, textposition="top center",
+                marker=dict(
+                    size=[abs(m) * 600 + 14 for m in sub_margin],
+                    color=colors_sc, opacity=0.85,
+                    line=dict(width=1, color="white"),
+                ),
+            ))
+            fig3.add_hline(y=0, line_dash="dot", line_color="#94a3b8")
+            fig3.update_layout(
+                height=380,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                xaxis=dict(title="Total Sales ($)"), yaxis=dict(title="Total Profit ($)"),
+            )
+            st.plotly_chart(fig3, use_container_width=True)
+            st.caption("Bubble size = absolute profit margin. Red = loss-making sub-category.")
 
     # ─── Project 4: Forecasting ──────────────────────────────────────────────
     else:
