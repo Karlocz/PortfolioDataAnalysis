@@ -164,20 +164,20 @@ h1, h2, h3 {
 
 # ─── Sidebar ─────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.markdown('<div class="sidebar-name">Your Name</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sidebar-name">Carlos Maximino</div>', unsafe_allow_html=True)
     st.markdown('<div class="sidebar-role">Data Analyst</div>', unsafe_allow_html=True)
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
 
     page = st.radio(
         "Navigate",
-        ["🏠  About", "📈  Projects", "🛠️  Skills", "📬  Contact"],
+        ["🏠  About", "📈  Projects", "🛠️  Skills", "📄  Resume", "📬  Contact"],
         label_visibility="collapsed",
     )
 
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.markdown("""
     <div style="font-size:12px; color:#475569; line-height:1.8;">
-        📍 São Paulo, Brazil<br>
+        📍 Brazil (Campinas region)<br>
         🌐 Open to remote & relocation<br>
         💼 Available for new roles
     </div>
@@ -186,8 +186,8 @@ with st.sidebar:
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.markdown("""
     <div style="font-size:12px; color:#475569;">
-        <a href="https://github.com" style="color:#60a5fa; text-decoration:none;">GitHub ↗</a> &nbsp;·&nbsp;
-        <a href="https://linkedin.com" style="color:#60a5fa; text-decoration:none;">LinkedIn ↗</a>
+        <a href="https://www.linkedin.com/in/carlos-maximino/" style="color:#60a5fa; text-decoration:none;">LinkedIn ↗</a> &nbsp;·&nbsp;
+        <a href="mailto:cmax15@outlook.com.br" style="color:#60a5fa; text-decoration:none;">Email ↗</a>
     </div>
     """, unsafe_allow_html=True)
 
@@ -196,19 +196,19 @@ with st.sidebar:
 # PAGE: ABOUT
 # ══════════════════════════════════════════════════════════════════════════════
 if "About" in page:
-    st.markdown('<div class="main-header">Turning data<br>into decisions.</div>', unsafe_allow_html=True)
-    st.markdown('<div class="main-subtitle">Data Analyst · SQL · Python · BI · Experimentation</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">10 years of data,<br>operations & insight.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-subtitle">Data Analyst · KPI/SLA · BI · ServiceNow · ITIL · Kyndryl</div>', unsafe_allow_html=True)
 
     # ── Summary stats ────────────────────────────────────────────────────────
     c1, c2, c3, c4 = st.columns(4)
     with c1:
-        st.metric("Years of Experience", "3+", delta="Growing")
+        st.metric("Years of Experience", "10+", delta="Across IT & Analytics")
     with c2:
-        st.metric("Projects Delivered", "20+", delta="End-to-end")
+        st.metric("Recurring Reports", "20", delta="Maintained actively")
     with c3:
-        st.metric("Revenue Impact", "$400K+", delta="Identified")
+        st.metric("Processes Monitored", "10", delta="9 service areas")
     with c4:
-        st.metric("Reports Automated", "70%", delta="Time saved")
+        st.metric("Team Led", "40 people", delta="Mainframe support")
 
     st.markdown("---")
 
@@ -218,41 +218,47 @@ if "About" in page:
     with col_bio:
         st.markdown("### About me")
         st.markdown("""
-I am a Data Analyst with experience translating complex datasets into strategic business decisions.
-I work with **SQL**, **Python**, and **BI tools** to build reliable metrics, scalable dashboards, and clear narratives for stakeholders.
+I am a Data and Analytics professional with **10+ years of progressive experience** across enterprise IT operations,
+service delivery, team leadership, and business performance reporting.
 
-My core strengths include KPI design, funnel analysis, cohort analysis, and experimentation support.
-I'm particularly motivated by international, data-driven teams where ownership and communication are critical.
+Currently working as a **Data Analyst at Kyndryl**, I transform operational, service, and business performance data
+into dashboards, executive reports, and decision-ready insights for managers, DPEs, and client stakeholders at **Delta Air Lines**.
 
-I'm open to **remote and relocation opportunities**.
+My background combines hands-on technical depth (mainframe, ITSM, ServiceNow, ITIL) with strong
+analytical and communication skills — giving me an unusual ability to bridge the gap between operations and data-driven strategy.
+
+I am open to **remote and relocation opportunities**.
         """)
 
     with col_stack:
         st.markdown("### Tech stack")
         skills = [
-            "SQL (Advanced)", "Python", "Power BI", "Tableau",
-            "Looker Studio", "BigQuery", "Git", "A/B Testing",
-            "Cohort Analysis", "Pandas", "Plotly", "Excel",
+            "Excel (Advanced)", "ServiceNow", "ITIL", "SQL",
+            "Python", "Tableau", "Power BI", "Neo4j",
+            "Databricks", "Google Cloud", "CSV / ETL", "KPI/SLA Analysis",
         ]
         pills_html = "".join(f'<span class="skill-pill">{s}</span>' for s in skills)
         st.markdown(pills_html, unsafe_allow_html=True)
 
     st.markdown("---")
 
-    # ── Experience timeline (Plotly Gantt-style) ─────────────────────────────
-    st.markdown("### Career timeline")
+    # ── Career timeline ──────────────────────────────────────────────────────
+    st.markdown("### Career progression")
     timeline_data = pd.DataFrame([
-        dict(Role="Data Analyst", Company="TechCorp", Start="2022-06", End="2024-12", Color="#3b82f6"),
-        dict(Role="Jr. Data Analyst", Company="RetailCo", Start="2021-01", End="2022-05", Color="#8b5cf6"),
-        dict(Role="Data Intern", Company="StartupXYZ", Start="2020-03", End="2020-12", Color="#10b981"),
+        dict(Role="Data Analyst", Company="Kyndryl", Start="2024-05", End="2025-05", Color="#3b82f6"),
+        dict(Role="Team Leader (40 people)", Company="Kyndryl", Start="2022-01", End="2024-05", Color="#6366f1"),
+        dict(Role="Service Delivery Analyst", Company="Kyndryl", Start="2021-09", End="2022-07", Color="#8b5cf6"),
+        dict(Role="Service Delivery Analyst", Company="IBM", Start="2019-12", End="2021-09", Color="#a78bfa"),
+        dict(Role="Scrum Master / Agile Coord.", Company="IBM", Start="2019-01", End="2019-12", Color="#c4b5fd"),
+        dict(Role="Mainframe Operations Analyst", Company="IBM", Start="2014-03", End="2019-12", Color="#ddd6fe"),
     ])
     fig = px.timeline(
         timeline_data,
         x_start="Start", x_end="End",
-        y="Company", color="Company",
+        y="Company", color="Role",
         text="Role",
-        color_discrete_sequence=["#3b82f6", "#8b5cf6", "#10b981"],
-        height=200,
+        color_discrete_sequence=["#3b82f6", "#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe"],
+        height=220,
     )
     fig.update_layout(
         showlegend=False,
@@ -677,41 +683,71 @@ elif "Skills" in page:
     col1, col2 = st.columns(2, gap="large")
 
     with col1:
-        st.markdown("#### Languages & Libraries")
-        lang_skills = {"SQL": 95, "Python (pandas/numpy)": 85, "Python (plotly/matplotlib)": 80, "Git": 75}
-        for skill, level in lang_skills.items():
+        st.markdown("#### Analytics & Reporting")
+        analytics_skills = {
+            "Excel (Advanced)": 95,
+            "KPI / SLA Analysis": 92,
+            "Dashboard Design": 88,
+            "SQL": 65,
+            "Python (fundamentals)": 55,
+        }
+        for skill, level in analytics_skills.items():
+            st.markdown(f"**{skill}**")
+            st.progress(level / 100)
+
+        st.markdown("#### BI & Visualization")
+        bi_skills = {
+            "Tableau (fundamentals)": 60,
+            "Power BI": 58,
+            "Operational Reporting": 92,
+        }
+        for skill, level in bi_skills.items():
             st.markdown(f"**{skill}**")
             st.progress(level / 100)
 
         st.markdown("#### Analytical Methods")
         methods = [
-            "Funnel & Conversion Analysis", "Cohort & Retention Analysis",
-            "Churn Prediction", "A/B Test Design & Analysis",
-            "Segmentation & RFM", "Time Series Forecasting",
-            "KPI Design", "Customer LTV / CAC",
+            "KPI / SLA Monitoring", "Trend Analysis", "Root Cause Analysis",
+            "Executive Reporting", "Operational Reporting", "Incident Analysis",
+            "Performance Benchmarking", "Process Improvement",
         ]
         pills = "".join(f'<span class="skill-pill">{m}</span>' for m in methods)
         st.markdown(pills, unsafe_allow_html=True)
 
     with col2:
-        st.markdown("#### BI & Visualization")
-        bi_skills = {"Power BI": 90, "Tableau": 80, "Looker Studio": 75, "Plotly / Dash": 70}
-        for skill, level in bi_skills.items():
+        st.markdown("#### Service Management & ITSM")
+        itsm_skills = {
+            "ServiceNow": 90,
+            "ITIL (certified)": 88,
+            "Incident Management": 92,
+            "Escalation Management": 90,
+            "Service Continuity": 88,
+        }
+        for skill, level in itsm_skills.items():
             st.markdown(f"**{skill}**")
             st.progress(level / 100)
 
-        st.markdown("#### Cloud & Data")
+        st.markdown("#### Cloud, Data & Emerging Tech")
         cloud = [
-            "BigQuery", "Snowflake", "Redshift",
-            "ETL Fundamentals", "dbt (basic)", "Airflow (basic)",
+            "Google Cloud (certified)", "Databricks (certified)",
+            "Neo4j (certified)", "CSV / ETL", "Mainframe z/OS",
+            "Control-M / CA-7", "Scrum Master (certified)",
         ]
         pills2 = "".join(f'<span class="skill-pill">{m}</span>' for m in cloud)
         st.markdown(pills2, unsafe_allow_html=True)
 
+        st.markdown("#### Languages")
+        langs = [("🇧🇷 Portuguese", 100, "Native"),
+                 ("🇺🇸 English", 72, "B2 Upper-Intermediate"),
+                 ("🇪🇸 Spanish", 70, "Professional Working")]
+        for flag, level, label in langs:
+            st.markdown(f"**{flag}** — *{label}*")
+            st.progress(level / 100)
+
     st.markdown("---")
     st.markdown("#### Skill radar")
-    categories = ["SQL", "Python", "BI / Dashboards", "Statistics", "Communication", "Cloud", "Product Sense"]
-    values_self = [95, 82, 88, 74, 85, 65, 80]
+    categories = ["Excel / Reporting", "KPI / SLA", "ITSM / ServiceNow", "SQL", "Python", "BI Tools", "Leadership"]
+    values_self = [95, 92, 90, 65, 55, 60, 85]
     values_self.append(values_self[0])
     categories.append(categories[0])
 
@@ -722,7 +758,7 @@ elif "Skills" in page:
     ))
     fig.update_layout(
         polar=dict(radialaxis=dict(visible=True, range=[0, 100])),
-        showlegend=False, height=400,
+        showlegend=False, height=420,
         paper_bgcolor="rgba(0,0,0,0)", font_family="DM Sans",
         margin=dict(l=40, r=40, t=40, b=40),
     )
@@ -730,11 +766,166 @@ elif "Skills" in page:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+# PAGE: RESUME
+# ══════════════════════════════════════════════════════════════════════════════
+elif "Resume" in page:
+    st.markdown("## Carlos Maximino")
+    st.markdown('<div class="main-subtitle">Brazil &nbsp;·&nbsp; +55 19 99379-2916 &nbsp;·&nbsp; cmax15@outlook.com.br &nbsp;·&nbsp; <a href="https://www.linkedin.com/in/carlos-maximino/" target="_blank">LinkedIn ↗</a></div>', unsafe_allow_html=True)
+
+    # ── Summary ──────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Professional Summary")
+    st.markdown("""
+Data and Analytics professional with **10+ years of progressive experience** across enterprise IT operations, mainframe environments,
+service delivery, KPI/SLA monitoring, incident management, team leadership, and business performance reporting.
+
+Currently working as a **Data Analyst at Kyndryl**, transforming operational, service, and business performance data into dashboards,
+executive reports, and decision-ready insights for managers, DPEs, internal teams, and client stakeholders at **Delta Air Lines**.
+Experienced analyzing data across 10 processes and 9 service areas, maintaining 20 recurring reports and dashboards,
+and supporting performance improvement and data-driven decision-making.
+
+**Career progression:** Mainframe Operations → Agile Coordination → Service Delivery → Team Leadership → Data Analytics
+    """)
+
+    # ── Experience ───────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Professional Experience")
+
+    experiences = [
+        {
+            "title": "Data Analyst — Service Performance, KPIs & Business Insights",
+            "company": "Kyndryl · Brazil",
+            "period": "May 2024 – Present",
+            "color": "#dbeafe",
+            "text_color": "#1e40af",
+            "bullets": [
+                "Developed and maintained **20 recurring reports and dashboards** covering KPIs, SLAs, productivity, ticket trends, and business performance.",
+                "Analyzed data across **10 processes** and **9 service areas** to identify trends, anomalies, risks, and improvement opportunities.",
+                "Supported Delta Air Lines stakeholders, managers, and DPEs with daily and on-demand performance analysis.",
+                "Delivered **10 weekly** and **5 monthly** insights to support operational reviews, performance tracking, and service governance.",
+                "Prepared monthly executive presentations with KPI/SLA results, trends, risks, and improvement opportunities for client executives.",
+                "Consolidated CSV and operational data sources to improve reporting consistency and management visibility.",
+            ]
+        },
+        {
+            "title": "Team Leader — Mainframe Support, Service Performance & Incident Management",
+            "company": "Kyndryl · Brazil",
+            "period": "Jan 2022 – May 2024",
+            "color": "#ede9fe",
+            "text_color": "#5b21b6",
+            "bullets": [
+                "Led a **40-person mainframe support team** for Delta Air Lines, ensuring service stability, SLA compliance, and operational continuity.",
+                "Used ServiceNow to monitor incident queues, SLA adherence, ticket aging, escalations, and service performance indicators.",
+                "Reviewed 3 daily, 5 monthly, and on-demand service performance reports; maintained weekly/monthly updated KPI dashboards.",
+                "Identified recurring issues, process gaps, and improvement opportunities to improve efficiency and service quality.",
+                "Coached team members on ServiceNow, incident handling, escalation processes, and operational routines.",
+            ]
+        },
+        {
+            "title": "Service Delivery Analyst — Mainframe Support, SLAs & Stakeholder Management",
+            "company": "Kyndryl · Brazil",
+            "period": "Sep 2021 – Jul 2022",
+            "color": "#f3e8ff",
+            "text_color": "#6b21a8",
+            "bullets": [
+                "Managed service delivery for Delta Air Lines mainframe support after IBM-to-Kyndryl transition, ensuring continuity and SLA tracking.",
+                "Prepared 3 daily, 5 monthly, and on-demand service performance reports with SLA status, incident trends, and improvement opportunities.",
+                "Acted as interface between technical teams, leadership, and stakeholders on performance, priorities, and escalations.",
+            ]
+        },
+        {
+            "title": "Service Delivery Analyst — Mainframe Support, SLAs & Service Continuity",
+            "company": "IBM · Brazil",
+            "period": "Dec 2019 – Sep 2021",
+            "color": "#e0f2fe",
+            "text_color": "#0369a1",
+            "bullets": [
+                "Managed service delivery for Delta Air Lines mainframe environment; monitored SLA/KPI performance across 9 service areas.",
+                "Prepared recurring service performance reports covering incidents, SLA status, risks, and operational trends.",
+                "Supported service continuity during the IBM-to-Kyndryl organizational transition.",
+            ]
+        },
+        {
+            "title": "Agile Project Coordinator / Scrum Master — Mainframe Operations",
+            "company": "IBM · Brazil",
+            "period": "Jan 2019 – Dec 2019",
+            "color": "#f0fdf4",
+            "text_color": "#166534",
+            "bullets": [
+                "Acted as Scrum Master in a mainframe operations environment, facilitating ceremonies, sprint planning, reviews, and retrospectives.",
+                "Tracked sprint progress, risks, blockers, and velocity in a high-demand, mission-critical operations context.",
+            ]
+        },
+        {
+            "title": "Mainframe Operations Analyst — z/OS, Batch Processing & Incident Management",
+            "company": "IBM · Brazil",
+            "period": "Mar 2014 – Dec 2019",
+            "color": "#fefce8",
+            "text_color": "#854d0e",
+            "bullets": [
+                "Monitored IBM Mainframe z/OS production environments for **24 clients**, ensuring service continuity across mission-critical operations.",
+                "Managed batch processing using JCL; handled average of **15 daily failed jobs** with L1/L2 incident management.",
+                "Used SDSF, JES2/JES3, Control-M, CA-7, OPC/TWS, FTP, and Connect:Direct for production monitoring and incident resolution.",
+            ]
+        },
+    ]
+
+    for exp in experiences:
+        badge = f'<span style="background:{exp["color"]};color:{exp["text_color"]};font-size:11px;font-weight:600;padding:3px 10px;border-radius:99px;">{exp["period"]}</span>'
+        st.markdown(f"**{exp['title']}**  \n{exp['company']} &nbsp; {badge}", unsafe_allow_html=True)
+        for b in exp["bullets"]:
+            st.markdown(f"- {b}")
+        st.markdown("")
+
+    # ── Education ────────────────────────────────────────────────────────────
+    st.markdown("---")
+    col_edu, col_cert = st.columns(2, gap="large")
+
+    with col_edu:
+        st.markdown("### Education")
+        edu = [
+            ("MBA in IT Project Management", "Fundação Getúlio Vargas — FGV", "Jan 2019 – Jun 2020"),
+            ("Bachelor's in Information Systems Management", "Centro Universitário Adventista — UNASP", "Feb 2013 – Dec 2016"),
+            ("Technical Diploma in Information Technology", "ETEC — Escola Técnica Estadual de SP", "Jun 2010 – Dec 2011"),
+        ]
+        for degree, school, period in edu:
+            st.markdown(f"**{degree}**  \n{school}  \n*{period}*")
+            st.markdown("")
+
+    with col_cert:
+        st.markdown("### Certifications")
+        certs = [
+            ("Neo4j Graph Data Science Certification", "Neo4j", "Apr 2026"),
+            ("Neo4j Certified Professional", "Neo4j", "Apr 2026"),
+            ("Databricks Lakehouse Fundamentals", "Databricks", "Apr 2026"),
+            ("Data Analytics Essentials", "Cisco", "Sep 2025"),
+            ("Data Science & AI Fundamentals", "Data Science Academy", "Sep 2025"),
+            ("Cloud Digital Leader", "Google", "Feb 2024"),
+            ("Scrum Master Professional Certificate", "CertiProf", "Feb 2021"),
+            ("ITIL Foundation Certificate", "AXELOS", "Dec 2016"),
+            ("Professional Scrum Master I", "Scrum.org", "Jul 2016"),
+        ]
+        for cert, issuer, date in certs:
+            st.markdown(f"- **{cert}** — {issuer} *({date})*")
+
+    # ── Languages ────────────────────────────────────────────────────────────
+    st.markdown("---")
+    st.markdown("### Languages")
+    lc1, lc2, lc3 = st.columns(3)
+    with lc1:
+        st.metric("🇧🇷 Portuguese", "Native")
+    with lc2:
+        st.metric("🇺🇸 English", "B2 Upper-Intermediate")
+    with lc3:
+        st.metric("🇪🇸 Spanish", "Professional Working")
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 # PAGE: CONTACT
 # ══════════════════════════════════════════════════════════════════════════════
 elif "Contact" in page:
     st.markdown("## Let's connect")
-    st.markdown('<div class="main-subtitle">Open to remote roles, relocation, and freelance projects.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-subtitle">Open to remote roles, relocation, and new opportunities.</div>', unsafe_allow_html=True)
 
     c1, c2 = st.columns(2, gap="large")
     with c1:
@@ -751,11 +942,10 @@ elif "Contact" in page:
     with c2:
         st.markdown("### Quick links")
         st.markdown("""
-- 🔗 **GitHub** — [github.com/yourhandle](https://github.com)
-- 💼 **LinkedIn** — [linkedin.com/in/yourname](https://linkedin.com)
-- 📄 **Resume** — [Download PDF](#)
-- 📧 **Email** — your@email.com
+- 💼 **LinkedIn** — [linkedin.com/in/carlos-maximino](https://www.linkedin.com/in/carlos-maximino/)
+- 📧 **Email** — cmax15@outlook.com.br
+- 📱 **Phone** — +55 19 99379-2916
         """)
         st.markdown("---")
         st.markdown("### Availability")
-        st.info("✅ **Available** for new opportunities starting January 2025.\n\nPreferences: Remote-first · Data & Product Analytics · International teams.")
+        st.info("✅ **Open to new opportunities.**\n\nPreferences: Remote-first · Data & Business Analytics · International teams · Relocation considered.")
