@@ -282,7 +282,9 @@ elif "Projects" in page:
 
     project_tab = st.selectbox(
         "Select project",
-        ["E-commerce Funnel Optimization", "Customer Churn Analysis", "Marketing CAC/LTV", "Operations Forecasting", "Global Superstore — Profitability Analysis"],
+        ["E-commerce Funnel Optimization", "Customer Churn Analysis", "Marketing CAC/LTV",
+         "Operations Forecasting", "Global Superstore — Profitability Analysis",
+         "CineGraph — Cinema & TV Analytics"],
         label_visibility="collapsed",
     )
 
@@ -618,7 +620,7 @@ across regions, customer segments, product categories, and discount bands.
             st.caption("Bubble size = absolute profit margin. Red = loss-making sub-category.")
 
     # ─── Project 4: Forecasting ──────────────────────────────────────────────
-    else:
+    elif project_tab == "Operations Forecasting":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
             st.markdown("""
@@ -672,6 +674,239 @@ across regions, customer segments, product categories, and discount bands.
         fig.update_xaxes(showgrid=False)
         fig.update_yaxes(showgrid=True, gridcolor="#f1f5f9", title="Tickets / Day")
         st.plotly_chart(fig, use_container_width=True)
+
+    # ─── Project 6: CineGraph ────────────────────────────────────────────────
+    elif project_tab == "CineGraph — Cinema & TV Analytics":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">HTML</span>
+<span class="project-tag">JavaScript</span>
+<span class="project-tag">Chart.js</span>
+<span class="project-tag">TMDB</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### CineGraph — Cinema & TV Analytics Dashboard")
+            st.markdown("""
+**Business problem:** The film industry generates enormous datasets, but most public tools lack a unified view
+linking financial performance, audience ratings, genre trends, and director output across decades.
+
+**Approach:** Built a fully custom analytical dashboard in pure **HTML + JavaScript (Chart.js)** using TMDB data.
+Covered 20,000+ films and 15,000+ TV series, engineering derived metrics like ROI, avg budget/revenue ratios,
+survivorship-adjusted decade ratings, and director efficiency scores.
+
+**Key findings:**
+- **Animation** leads in ROI (~3.7×) despite not having the highest budgets — driven by strong home media revenue.
+- Average ratings **decline across decades** (7.42 in the 1920s → 6.42 in the 2000s) — a classic survivorship bias effect; only great old films survive.
+- **Martin Scorsese** achieves the highest avg rating (★ 7.27) among directors with 25+ films — quality at scale.
+- Micro-budget films dominate extreme ROI: *Fist of Fury* at ~100,000% ROI, *One Cut of the Dead* at 52,547%.
+- **English** accounts for 73% of catalogued films; French (8%) is a distant second.
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Dataset scope</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">20K+</div>
+  <div class="metric-label">Films analysed</div>
+  <div class="metric-delta">TMDB dataset</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">15K+</div>
+  <div class="metric-label">TV series</div>
+  <div class="metric-delta">Status & genre breakdown</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3, tab4 = st.tabs(["Budget & Revenue", "Ratings over Time", "ROI & Directors", "Hall of Fame"])
+
+        # ── Tab 1: Budget & Revenue ──────────────────────────────────────────
+        with tab1:
+            st.markdown("#### Average budget vs. revenue by genre (US$M)")
+            genres_fin   = ["Animation","Adventure","Family","Sci-Fi","Fantasy","Action","Comedy","Thriller"]
+            budgets      = [57.8, 65.4, 54.1, 56.7, 54.4, 52.5, 28.8, 28.6]
+            revenues     = [214.5, 207.3, 173.5, 167.6, 160.2, 147.0, 84.6, 71.0]
+            roi_mult     = [r / b for r, b in zip(revenues, budgets)]
+
+            fig = go.Figure()
+            fig.add_trace(go.Bar(name="Avg Budget ($M)", x=genres_fin, y=budgets,
+                marker_color="#5b8dee", text=[f"${v}M" for v in budgets], textposition="outside"))
+            fig.add_trace(go.Bar(name="Avg Revenue ($M)", x=genres_fin, y=revenues,
+                marker_color="#e8b84b", text=[f"${v}M" for v in revenues], textposition="outside"))
+            fig.update_layout(
+                barmode="group", height=340, showlegend=True,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                legend=dict(orientation="h", y=-0.2),
+                yaxis=dict(tickprefix="$", ticksuffix="M"),
+            )
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("#### Revenue multiplier by genre (Revenue ÷ Budget)")
+            colors_roi = ["#10b981" if r > 3 else "#f59e0b" if r > 2 else "#94a3b8" for r in roi_mult]
+            fig2 = go.Figure(go.Bar(
+                x=genres_fin, y=roi_mult,
+                marker_color=colors_roi,
+                text=[f"{r:.1f}×" for r in roi_mult], textposition="outside",
+            ))
+            fig2.add_hline(y=1, line_dash="dot", line_color="#ef4444",
+                           annotation_text="Break-even", annotation_position="right")
+            fig2.update_layout(
+                height=260, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                yaxis=dict(title="Revenue / Budget"),
+            )
+            st.plotly_chart(fig2, use_container_width=True)
+            st.info("📌 **Finding:** Animation returns $3.7 for every $1 spent — the highest multiplier of any genre, driven by global appeal and merchandise revenue streams.")
+
+        # ── Tab 2: Ratings over Time ─────────────────────────────────────────
+        with tab2:
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("#### Avg TMDB rating by decade")
+                decades  = ["1920s","1930s","1940s","1950s","1960s","1970s","1980s","1990s","2000s","2010s","2020s"]
+                d_rating = [7.42, 7.10, 7.14, 7.17, 7.06, 6.83, 6.55, 6.52, 6.42, 6.44, 6.72]
+                fig3 = go.Figure(go.Scatter(
+                    x=decades, y=d_rating, mode="lines+markers",
+                    line=dict(color="#9b7de8", width=2),
+                    marker=dict(size=7, color="#9b7de8"),
+                    fill="tozeroy", fillcolor="rgba(155,125,232,0.08)",
+                ))
+                fig3.update_layout(
+                    height=280, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                    yaxis=dict(range=[6.1, 7.7], title="Avg Rating"),
+                    xaxis=dict(tickangle=30),
+                )
+                st.plotly_chart(fig3, use_container_width=True)
+                st.caption("⚠️ Survivorship bias: only acclaimed older films remain in the dataset, inflating pre-1980 averages.")
+
+            with col_b:
+                st.markdown("#### Top TV genres by avg rating")
+                tv_genres  = ["Animation","Family","War & Pol.","Sci-Fi","Action & Adv.","Kids","Documentary","Drama","Comedy","Mystery"]
+                tv_ratings = [7.48, 7.40, 7.39, 7.38, 7.38, 7.36, 7.35, 7.31, 7.31, 7.28]
+                fig4 = go.Figure(go.Bar(
+                    y=tv_genres[::-1], x=tv_ratings[::-1], orientation="h",
+                    marker_color=["#4ecdc4"] * 10,
+                    text=[f"★ {r:.2f}" for r in tv_ratings[::-1]], textposition="outside",
+                ))
+                fig4.update_layout(
+                    height=280, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=60),
+                    xaxis=dict(range=[7.0, 7.7]),
+                )
+                st.plotly_chart(fig4, use_container_width=True)
+
+            # Language donut
+            st.markdown("#### Film catalogue by original language")
+            langs       = ["English","French","Spanish","Japanese","Italian","Others"]
+            lang_counts = [14713, 1606, 907, 769, 763, 1635]
+            fig5 = go.Figure(go.Pie(
+                labels=langs, values=lang_counts,
+                hole=0.65,
+                marker_colors=["#e8b84b","#5b8dee","#9b7de8","#4ecdc4","#e05252","#64748b"],
+                textinfo="label+percent",
+            ))
+            fig5.update_layout(
+                height=300, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+            )
+            st.plotly_chart(fig5, use_container_width=True)
+
+        # ── Tab 3: ROI & Directors ───────────────────────────────────────────
+        with tab3:
+            col_a, col_b = st.columns([3, 2])
+            with col_a:
+                st.markdown("#### Directors: avg rating vs. films directed")
+                dir_names   = ["Woody Allen","Clint Eastwood","Alfred Hitchcock","Steven Spielberg",
+                               "Martin Scorsese","Ridley Scott","Ron Howard","Pedro Almodóvar"]
+                dir_films   = [51, 40, 38, 35, 29, 29, 28, 24]
+                dir_ratings = [6.73, 6.84, 7.15, 7.19, 7.27, 6.81, 6.76, 6.99]
+                fig6 = go.Figure(go.Scatter(
+                    x=dir_films, y=dir_ratings,
+                    mode="markers+text", text=dir_names,
+                    textposition="top center",
+                    marker=dict(
+                        size=[f / 3 + 12 for f in dir_films],
+                        color=dir_ratings,
+                        colorscale=[[0,"#5b8dee"],[0.5,"#9b7de8"],[1,"#e8b84b"]],
+                        showscale=True,
+                        colorbar=dict(title="Rating", thickness=10, len=0.6),
+                        line=dict(width=1, color="white"),
+                    ),
+                ))
+                fig6.update_layout(
+                    height=360,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=40, t=20, b=0),
+                    xaxis=dict(title="Films directed"),
+                    yaxis=dict(title="Avg TMDB rating", range=[6.2, 7.5]),
+                )
+                st.plotly_chart(fig6, use_container_width=True)
+
+            with col_b:
+                st.markdown("#### Extreme ROI — micro-budget films")
+                roi_films  = ["Fist of Fury","One Cut of Dead","Pink Flamingos",
+                              "Open Water","Super Size Me","Bambi","Mad Max","El Mariachi"]
+                roi_vals   = [99900, 52547, 49900, 45469, 43861, 31071, 28471, 28148]
+                fig7 = go.Figure(go.Bar(
+                    y=[f[:18] for f in roi_films[::-1]],
+                    x=roi_vals[::-1],
+                    orientation="h",
+                    marker_color="#10b981",
+                    text=[f"{v//1000}k%" for v in roi_vals[::-1]],
+                    textposition="outside",
+                ))
+                fig7.update_layout(
+                    height=360, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0, r=40, t=20, b=0),
+                    xaxis=dict(title="ROI (%)"),
+                )
+                st.plotly_chart(fig7, use_container_width=True)
+
+            st.info("📌 **Finding:** Micro-budget productions ≤ $10K dominate extreme ROI. *Fist of Fury* (1972) generated ~100,000% return — the dataset's highest. These outliers illustrate why avg ROI metrics must be paired with median and distribution analysis.")
+
+        # ── Tab 4: Hall of Fame ──────────────────────────────────────────────
+        with tab4:
+            st.markdown("#### Top-rated films — TMDB Hall of Fame")
+            hof = [
+                ("The Shawshank Redemption", 1994, 8.72, "30.1k"),
+                ("The Godfather", 1972, 8.69, "22.8k"),
+                ("The Godfather Part II", 1974, 8.57, "13.8k"),
+                ("Schindler's List", 1993, 8.57, "17.3k"),
+                ("12 Angry Men", 1957, 8.56, "9.9k"),
+                ("Spirited Away", 2001, 8.53, "18.2k"),
+                ("The Dark Knight", 2008, 8.53, "35.5k"),
+                ("Dilwale Dulhania Le Jayenge", 1995, 8.52, "4.6k"),
+            ]
+            hof_df = pd.DataFrame(hof, columns=["Film", "Year", "Rating", "Votes"])
+            hof_df.index = hof_df.index + 1
+
+            fig8 = go.Figure(go.Bar(
+                y=[f[0][:30] for f in hof[::-1]],
+                x=[f[2] for f in hof[::-1]],
+                orientation="h",
+                marker=dict(
+                    color=[f[2] for f in hof[::-1]],
+                    colorscale=[[0,"#3b82f6"],[0.5,"#8b5cf6"],[1,"#e8b84b"]],
+                    showscale=False,
+                ),
+                text=[f"★ {f[2]:.2f}  ({f[3]} votes)" for f in hof[::-1]],
+                textposition="inside",
+                insidetextanchor="end",
+                textfont=dict(size=11, color="white"),
+            ))
+            fig8.update_layout(
+                height=340, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
+                xaxis=dict(range=[8.4, 8.85], title="TMDB Rating"),
+            )
+            st.plotly_chart(fig8, use_container_width=True)
+            st.caption("Data source: TMDB (The Movie Database). Ratings reflect weighted audience scores at time of data collection.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
