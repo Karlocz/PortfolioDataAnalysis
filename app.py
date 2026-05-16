@@ -22,7 +22,7 @@ html, body, [class*="css"] {
     font-family: 'DM Sans', sans-serif;
 }
 
-/* Sidebar */
+/* ── Sidebar (always dark — intentional design) ── */
 section[data-testid="stSidebar"] {
     background: #0f1117;
     border-right: 1px solid #1e2130;
@@ -38,7 +38,7 @@ section[data-testid="stSidebar"] * {
 }
 .sidebar-role {
     font-size: 12px;
-    color: #64748b !important;
+    color: #94a3b8 !important;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-bottom: 24px;
@@ -49,24 +49,25 @@ section[data-testid="stSidebar"] * {
     margin: 16px 0;
 }
 
-/* Main area */
+/* ── Main area — uses Streamlit theme variables ── */
 .main-header {
     font-family: 'DM Serif Display', serif;
     font-size: 42px;
-    color: #0f1117;
+    color: var(--text-color);
     line-height: 1.2;
     margin-bottom: 8px;
 }
 .main-subtitle {
     font-size: 16px;
-    color: #64748b;
+    color: var(--text-color);
+    opacity: 0.6;
     margin-bottom: 36px;
 }
 
-/* Metric card */
+/* ── Metric card ── */
 .metric-card {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 12px;
     padding: 20px 24px;
     text-align: center;
@@ -74,12 +75,13 @@ section[data-testid="stSidebar"] * {
 .metric-value {
     font-size: 32px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-color);
     line-height: 1;
 }
 .metric-label {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-color);
+    opacity: 0.5;
     margin-top: 6px;
     text-transform: uppercase;
     letter-spacing: 0.06em;
@@ -91,18 +93,19 @@ section[data-testid="stSidebar"] * {
     font-weight: 500;
 }
 
-/* Project card */
+/* ── Project card ── */
 .project-card {
-    background: white;
-    border: 1px solid #e2e8f0;
+    background: var(--background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    transition: box-shadow 0.2s;
 }
+
+/* ── Tags & pills ── */
 .project-tag {
     display: inline-block;
-    background: #eff6ff;
+    background: rgba(59, 130, 246, 0.15);
     color: #3b82f6;
     font-size: 11px;
     font-weight: 600;
@@ -114,8 +117,8 @@ section[data-testid="stSidebar"] * {
 }
 .skill-pill {
     display: inline-block;
-    background: #f1f5f9;
-    color: #475569;
+    background: rgba(128, 128, 128, 0.12);
+    color: var(--text-color);
     font-size: 13px;
     padding: 6px 14px;
     border-radius: 99px;
@@ -125,7 +128,8 @@ section[data-testid="stSidebar"] * {
 .section-label {
     font-size: 11px;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-color);
+    opacity: 0.5;
     text-transform: uppercase;
     letter-spacing: 0.1em;
     margin-bottom: 12px;
@@ -133,19 +137,19 @@ section[data-testid="stSidebar"] * {
 .impact-number {
     font-family: 'DM Serif Display', serif;
     font-size: 28px;
-    color: #0f172a;
+    color: var(--text-color);
 }
 
-/* Streamlit overrides */
+/* ── Streamlit component overrides ── */
 div[data-testid="stMetric"] {
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--secondary-background-color);
+    border: 1px solid rgba(128, 128, 128, 0.2);
     border-radius: 12px;
     padding: 16px 20px;
 }
 .stButton > button {
-    background: #0f172a;
-    color: white;
+    background: var(--text-color);
+    color: var(--background-color);
     border: none;
     border-radius: 8px;
     font-family: 'DM Sans', sans-serif;
@@ -153,11 +157,12 @@ div[data-testid="stMetric"] {
     padding: 10px 22px;
 }
 .stButton > button:hover {
-    background: #1e293b;
-    color: white;
+    opacity: 0.85;
+    color: var(--background-color);
 }
 h1, h2, h3 {
     font-family: 'DM Serif Display', serif !important;
+    color: var(--text-color) !important;
 }
 </style>
 """, unsafe_allow_html=True)
