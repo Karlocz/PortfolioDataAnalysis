@@ -320,6 +320,302 @@ elif "Projects" in page:
 
     project_tab = st.selectbox("Select project", filtered_projects, label_visibility="collapsed")
 
+
+    # ── Recruiter-facing technical code snippets ────────────────────────────
+    PROJECT_CODE_SNIPPETS = {
+        "E-commerce Funnel Optimization": {
+            "language": "sql",
+            "code": """-- Funnel conversion by device and acquisition channel
+WITH events AS (
+    SELECT
+        user_id,
+        session_id,
+        device_type,
+        utm_source,
+        event_name,
+        event_timestamp
+    FROM raw.web_events
+    WHERE event_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
+),
+funnel AS (
+    SELECT
+        device_type,
+        utm_source,
+        COUNT(DISTINCT IF(event_name = 'visit', session_id, NULL))        AS visits,
+        COUNT(DISTINCT IF(event_name = 'product_view', session_id, NULL)) AS product_views,
+        COUNT(DISTINCT IF(event_name = 'add_to_cart', session_id, NULL))  AS add_to_carts,
+        COUNT(DISTINCT IF(event_name = 'checkout', session_id, NULL))     AS checkouts,
+        COUNT(DISTINCT IF(event_name = 'purchase', session_id, NULL))     AS purchases
+    FROM events
+    GROUP BY device_type, utm_source
+)
+SELECT
+    *,
+    SAFE_DIVIDE(product_views, visits)      AS visit_to_product_rate,
+    SAFE_DIVIDE(add_to_carts, product_views) AS product_to_cart_rate,
+    SAFE_DIVIDE(checkouts, add_to_carts)    AS cart_to_checkout_rate,
+    SAFE_DIVIDE(purchases, checkouts)       AS checkout_to_purchase_rate
+FROM funnel
+ORDER BY cart_to_checkout_rate ASC;""",
+        },
+        "Customer Churn Analysis": {
+            "language": "python",
+            "code": """# Cohort retention + churn risk scoring
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import roc_auc_score
+
+customers['signup_month'] = customers['signup_date'].dt.to_period('M')
+activity['active_month'] = activity['event_date'].dt.to_period('M')
+
+cohort = (
+    activity.merge(customers[['customer_id', 'signup_month']], on='customer_id')
+    .assign(month_number=lambda d: (d['active_month'] - d['signup_month']).apply(lambda x: x.n))
+    .query('month_number >= 0')
+    .groupby(['signup_month', 'month_number'])['customer_id']
+    .nunique()
+    .reset_index(name='active_customers')
+)
+cohort['retention_rate'] = cohort['active_customers'] / cohort.groupby('signup_month')['active_customers'].transform('first')
+
+features = customers[['plan_type', 'logins_first_30d', 'tickets_opened', 'days_since_last_login']]
+X = pd.get_dummies(features, drop_first=True)
+y = customers['churned']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=42, stratify=y)
+model = LogisticRegression(max_iter=1000).fit(X_train, y_train)
+customers['churn_risk_score'] = model.predict_proba(X)[:, 1]
+print('AUC:', roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]))""",
+        },
+        "Marketing CAC/LTV": {
+            "language": "python",
+            "code": """# Channel-level CAC, LTV, LTV/CAC and payback period
+spend_by_channel = spend.groupby(['month', 'channel'], as_index=False)['cost'].sum()
+revenue_by_customer = orders.groupby(['customer_id', 'channel'], as_index=False)['revenue'].sum()
+new_customers = customers.query('is_new_customer == 1').groupby('channel')['customer_id'].nunique()
+
+cac = spend.groupby('channel')['cost'].sum().div(new_customers).rename('cac')
+ltv = revenue_by_customer.groupby('channel')['revenue'].mean().rename('ltv')
+monthly_margin = orders.assign(gross_margin=orders['revenue'] - orders['cost_of_goods']).groupby('channel')['gross_margin'].mean()
+
+marketing_efficiency = pd.concat([cac, ltv, monthly_margin.rename('avg_monthly_margin')], axis=1)
+marketing_efficiency['ltv_cac_ratio'] = marketing_efficiency['ltv'] / marketing_efficiency['cac']
+marketing_efficiency['payback_months'] = marketing_efficiency['cac'] / marketing_efficiency['avg_monthly_margin']
+marketing_efficiency.sort_values('ltv_cac_ratio', ascending=False)""",
+        },
+        "Operations Forecasting": {
+            "language": "python",
+            "code": """# Ticket demand forecast using rolling average + weekday seasonality
+import pandas as pd
+
+series = tickets.set_index('opened_at').resample('D')['ticket_id'].count().rename('tickets').to_frame()
+series['rolling_7d'] = series['tickets'].rolling(7, min_periods=7).mean()
+series['weekday'] = series.index.day_name()
+
+weekday_factor = (
+    series.groupby('weekday')['tickets'].mean() / series['tickets'].mean()
+).to_dict()
+
+future = pd.DataFrame(index=pd.date_range(series.index.max() + pd.Timedelta(days=1), periods=30, freq='D'))
+future['weekday'] = future.index.day_name()
+future['baseline'] = series['rolling_7d'].iloc[-1]
+future['forecast'] = future['baseline'] * future['weekday'].map(weekday_factor)
+future['recommended_staff'] = (future['forecast'] / 22).round().astype(int)  # 22 tickets per analyst/day
+future[['forecast', 'recommended_staff']].head()""",
+        },
+        "Global Superstore — Profitability": {
+            "language": "python",
+            "code": """# Profitability EDA with engineered business metrics
+import pandas as pd
+
+orders = pd.read_csv('global_superstore.csv', parse_dates=['Order Date', 'Ship Date'])
+orders['profit_margin'] = orders['Profit'] / orders['Sales']
+orders['shipping_cost_ratio'] = orders['Shipping Cost'] / orders['Sales']
+orders['shipping_days'] = (orders['Ship Date'] - orders['Order Date']).dt.days
+orders['discount_band'] = pd.cut(
+    orders['Discount'],
+    bins=[-0.01, 0, .10, .20, .30, 1],
+    labels=['No Discount', '0-10%', '10-20%', '20-30%', '30%+']
+)
+
+summary = (
+    orders.groupby(['Region', 'Category', 'discount_band'], observed=True)
+    .agg(
+        orders=('Order ID', 'nunique'),
+        sales=('Sales', 'sum'),
+        profit=('Profit', 'sum'),
+        avg_margin=('profit_margin', 'mean'),
+        ship_cost_ratio=('shipping_cost_ratio', 'mean')
+    )
+    .reset_index()
+    .sort_values('avg_margin')
+)
+summary.head(10)""",
+        },
+        "CineGraph — Cinema & TV Analytics": {
+            "language": "javascript",
+            "code": """// TMDB analytics: ROI, decade ratings and director efficiency
+const moviesClean = movies
+  .filter(d => d.budget > 0 && d.revenue > 0 && d.vote_count >= 100)
+  .map(d => ({
+    ...d,
+    roi: (d.revenue - d.budget) / d.budget,
+    revenueMultiplier: d.revenue / d.budget,
+    decade: `${Math.floor(new Date(d.release_date).getFullYear() / 10) * 10}s`
+  }));
+
+const byGenre = d3.rollups(
+  moviesClean.flatMap(m => m.genres.map(g => ({ genre: g, ...m }))),
+  v => ({
+    films: v.length,
+    avgBudget: d3.mean(v, d => d.budget),
+    avgRevenue: d3.mean(v, d => d.revenue),
+    avgRoi: d3.mean(v, d => d.roi),
+    avgRating: d3.mean(v, d => d.vote_average)
+  }),
+  d => d.genre
+).sort((a, b) => b[1].avgRoi - a[1].avgRoi);
+
+const directorScore = d3.rollups(
+  moviesClean.filter(d => d.director),
+  v => ({ films: v.length, avgRating: d3.mean(v, d => d.vote_average) }),
+  d => d.director
+).filter(([_, s]) => s.films >= 25);""",
+        },
+        "HR Analytics Dashboard": {
+            "language": "dax",
+            "code": """-- Power BI DAX measures used in the attrition dashboard
+Headcount =
+CALCULATE(
+    DISTINCTCOUNT(Employees[EmployeeID]),
+    Employees[HireDate] <= MAX('Date'[Date]),
+    OR(ISBLANK(Employees[TerminationDate]), Employees[TerminationDate] > MAX('Date'[Date]))
+)
+
+Departures =
+CALCULATE(
+    DISTINCTCOUNT(Employees[EmployeeID]),
+    USERELATIONSHIP(Employees[TerminationDate], 'Date'[Date])
+)
+
+Attrition Rate =
+DIVIDE([Departures], [Headcount])
+
+High Performer Attrition =
+CALCULATE(
+    [Attrition Rate],
+    Employees[PerformanceBand] IN {4, 5}
+)
+
+Early Tenure Departure % =
+DIVIDE(
+    CALCULATE([Departures], Employees[TenureBucket] IN {"< 1 year", "1-2 years"}),
+    [Departures]
+)""",
+        },
+        "Data Warehouse & SQL Optimization": {
+            "language": "sql",
+            "code": """-- Medallion mart pattern: consistent business logic in one place
+CREATE OR REPLACE TABLE mart.mart_orders
+PARTITION BY order_month
+CLUSTER BY customer_id, category AS
+WITH orders AS (
+    SELECT * FROM staging.stg_orders
+),
+customers AS (
+    SELECT * FROM intermediate.int_customers_segmented
+),
+products AS (
+    SELECT * FROM staging.stg_products
+)
+SELECT
+    o.order_id,
+    DATE_TRUNC(o.order_date, MONTH) AS order_month,
+    c.customer_id,
+    c.segment,
+    c.country,
+    p.category,
+    p.sub_category,
+    o.sales,
+    o.discount,
+    o.profit,
+    SAFE_DIVIDE(o.profit, o.sales) AS profit_margin,
+    SAFE_DIVIDE(o.shipping_cost, o.sales) AS shipping_cost_ratio
+FROM orders o
+LEFT JOIN customers c USING (customer_id)
+LEFT JOIN products p USING (product_id);""",
+        },
+        "A/B Testing & Regression — R": {
+            "language": "r",
+            "code": """library(tidyverse)
+library(broom)
+library(pwr)
+
+# Power analysis before launch
+sample_size <- pwr.2p.test(
+  h = ES.h(p1 = 0.052, p2 = 0.041),
+  sig.level = 0.05,
+  power = 0.80,
+  alternative = 'two.sided'
+)
+
+# Primary metric test
+experiment_result <- t.test(
+  conversion ~ variant,
+  data = experiment_data,
+  alternative = 'two.sided',
+  conf.level = 0.95
+) |> tidy()
+
+# Logistic regression with device/source controls
+model <- glm(
+  converted ~ variant + device_type + session_duration + traffic_source + returning_user,
+  data = experiment_data,
+  family = binomial()
+)
+
+tidy(model, conf.int = TRUE, exponentiate = TRUE)""",
+        },
+        "ETL Pipeline — Airflow + dbt + BigQuery": {
+            "language": "python",
+            "code": """# Airflow DAG: extract raw files, run dbt, test, then refresh BI cache
+from airflow.decorators import dag
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
+from pendulum import datetime
+
+@dag(
+    schedule='0 5 * * *',
+    start_date=datetime(2024, 1, 1),
+    catchup=False,
+    tags=['analytics', 'production'],
+    on_failure_callback=slack_alert,
+)
+def daily_analytics_pipeline():
+    load_orders = GCSToBigQueryOperator(
+        task_id='load_raw_orders',
+        bucket='analytics-landing',
+        source_objects=['orders/{{ ds }}/*.csv'],
+        destination_project_dataset_table='raw.orders',
+        write_disposition='WRITE_APPEND',
+    )
+
+    dbt_run = DbtCloudRunJobOperator(task_id='dbt_run', job_id=12345)
+    dbt_test = DbtCloudRunJobOperator(task_id='dbt_test', job_id=12346)
+    refresh_dashboards = refresh_looker_cache(task_id='refresh_dashboards')
+
+    load_orders >> dbt_run >> dbt_test >> refresh_dashboards
+
+daily_analytics_pipeline()""",
+        },
+    }
+
+    def render_technical_code(project_name):
+        snippet = PROJECT_CODE_SNIPPETS[project_name]
+        with st.expander("🔎 Technical code used in the analysis", expanded=True):
+            st.caption("Representative code block showing the technical steps behind this project.")
+            st.code(snippet["code"].strip(), language=snippet["language"])
+
     # ─── Project 1: Funnel ───────────────────────────────────────────────────
     if project_tab == "E-commerce Funnel Optimization":
         col_desc, col_impact = st.columns([2, 1])
@@ -346,6 +642,8 @@ elif "Projects" in page:
   <div class="metric-delta">+1.5 p.p. checkout conversion</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("E-commerce Funnel Optimization")
 
         # Funnel chart
         st.markdown("#### Conversion funnel")
@@ -414,6 +712,8 @@ elif "Projects" in page:
 </div>
             """, unsafe_allow_html=True)
 
+        render_technical_code("Customer Churn Analysis")
+
         # Cohort heatmap
         st.markdown("#### Retention cohort heatmap")
         np.random.seed(42)
@@ -469,6 +769,8 @@ elif "Projects" in page:
   <div class="metric-delta">18% budget reallocation</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("Marketing CAC/LTV")
 
         channels = ["Organic Search", "Paid Search", "Paid Social", "Email", "Referral"]
         cac      = [28, 95, 140, 18, 42]
@@ -535,6 +837,8 @@ across regions, customer segments, product categories, and discount bands.
   <div class="metric-delta">7 global markets</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("Global Superstore — Profitability")
 
         tab1, tab2, tab3 = st.tabs(["Discount Impact", "Regional Profitability", "Category & Segment"])
 
@@ -678,6 +982,8 @@ across regions, customer segments, product categories, and discount bands.
 </div>
             """, unsafe_allow_html=True)
 
+        render_technical_code("Operations Forecasting")
+
         # Time series chart
         st.markdown("#### Demand forecast — next 30 days")
         np.random.seed(7)
@@ -747,6 +1053,8 @@ survivorship-adjusted decade ratings, and director efficiency scores.
   <div class="metric-delta">Status & genre breakdown</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("CineGraph — Cinema & TV Analytics")
 
         tab1, tab2, tab3, tab4 = st.tabs(["Budget & Revenue", "Ratings over Time", "ROI & Directors", "Hall of Fame"])
 
@@ -979,6 +1287,8 @@ band, and tenure without requesting reports.
 </div>
             """, unsafe_allow_html=True)
 
+        render_technical_code("HR Analytics Dashboard")
+
         tab1, tab2, tab3 = st.tabs(["Attrition Drivers", "Headcount & Hiring", "Performance"])
 
         with tab1:
@@ -1099,6 +1409,8 @@ primary key, and update frequency.
   <div class="metric-delta">14 monitored tables</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("Data Warehouse & SQL Optimization")
 
         tab1, tab2, tab3 = st.tabs(["Architecture", "Performance", "Data Quality"])
 
@@ -1253,6 +1565,8 @@ multiple comparisons.
   <div class="metric-delta">Effect below cost threshold</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("A/B Testing & Regression — R")
 
         tab1, tab2, tab3 = st.tabs(["Distribution & Test", "Confidence Intervals", "Regression"])
 
@@ -1417,6 +1731,8 @@ Added Slack alerting, automatic retries, and a monitoring dashboard.
   <div class="metric-delta">Target: 95%</div>
 </div>
             """, unsafe_allow_html=True)
+
+        render_technical_code("ETL Pipeline — Airflow + dbt + BigQuery")
 
         tab1, tab2, tab3 = st.tabs(["Pipeline Architecture", "Run Performance", "dbt Tests"])
 
