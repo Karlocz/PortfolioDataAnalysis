@@ -18,12 +18,14 @@ That background shapes how I work: I don't just build dashboards, I understand t
 
 ## What's in this portfolio
 
-Six end-to-end projects covering different analytical domains and tools. Each one starts with a business problem and ends with a concrete recommendation.
+Ten end-to-end projects covering data analysis, business intelligence, statistical analysis, and data engineering. Each one starts with a business problem and ends with a concrete recommendation.
+
+Projects can be filtered by technology directly in the app: `SQL` · `Python` · `Power BI` · `R` · `dbt` · `Airflow` · `BigQuery` · `HTML/JS`
 
 ---
 
 ### 01 · E-commerce Funnel Optimization
-`SQL` `Power BI` `Funnel Analysis`
+`SQL` `Power BI` `Python`
 
 Identified where users abandon the purchase journey and quantified the revenue opportunity at each drop-off point. Segmented by device and acquisition channel to pinpoint that mobile users dropped off 2.3× more at the cart-to-checkout step — traced to a non-responsive UI on iOS.
 
@@ -32,7 +34,7 @@ Identified where users abandon the purchase journey and quantified the revenue o
 ---
 
 ### 02 · Customer Churn Analysis
-`Python` `Pandas` `Cohort Analysis` `SaaS`
+`Python`
 
 Built 12-month retention cohorts for a SaaS company with 6.2% monthly churn. Segmented by plan type and early engagement behaviour, then developed a simple logistic-regression risk score to flag at-risk accounts for proactive outreach.
 
@@ -43,7 +45,7 @@ Built 12-month retention cohorts for a SaaS company with 6.2% monthly churn. Seg
 ---
 
 ### 03 · Marketing Efficiency — CAC / LTV
-`SQL` `Python` `Growth Analytics`
+`SQL` `Python`
 
 Consolidated spend and revenue data across 5 acquisition channels, calculated per-channel CAC and LTV, and modeled payback periods. Found that organic search delivered 3× higher LTV/CAC ratio than paid social despite receiving only 12% of the budget.
 
@@ -52,7 +54,7 @@ Consolidated spend and revenue data across 5 acquisition channels, calculated pe
 ---
 
 ### 04 · Operations & Demand Forecasting
-`Python` `Time Series` `Operations`
+`Python`
 
 Modeled ticket volume with a 7-day rolling average and seasonal adjustment to support weekly staffing decisions. Identified strong Monday/Tuesday peaks that were being systematically ignored, leading to recurring SLA breaches at the start of the week.
 
@@ -61,7 +63,7 @@ Modeled ticket volume with a 7-day rolling average and seasonal adjustment to su
 ---
 
 ### 05 · Global Superstore — Profitability & Segmentation
-`Python` `Pandas` `EDA` `Retail`
+`Python`
 
 End-to-end exploratory analysis of 51,290 transaction rows across 147 countries (2011–2014). Engineered Profit Margin, Shipping Cost Ratio, and Discount Band metrics to surface where the business was silently losing money.
 
@@ -73,15 +75,63 @@ End-to-end exploratory analysis of 51,290 transaction rows across 147 countries 
 ---
 
 ### 06 · CineGraph — Cinema & TV Analytics
-`HTML` `JavaScript` `Chart.js` `TMDB`
+`HTML/JS`
 
 A fully custom analytics dashboard built in pure HTML and JavaScript, analyzing 20,000+ films and 15,000+ TV series from TMDB. Covers genre financial performance, rating trends across decades, language distribution, extreme ROI outliers, and director efficiency benchmarks.
 
 **Key findings:**
 - Animation returns $3.7 for every $1 spent — the highest revenue multiplier of any genre
-- Pre-1980 films show inflated ratings due to survivorship bias (only acclaimed films remain in the dataset)
+- Pre-1980 films show inflated ratings due to survivorship bias
 - Martin Scorsese achieves the highest avg rating (★ 7.27) among directors with 25+ films
-- Micro-budget films dominate extreme ROI: *Fist of Fury* at ~100,000%, *One Cut of the Dead* at 52,547%
+
+---
+
+### 07 · HR Analytics Dashboard
+`Power BI`
+
+Modeled People data for 2,800 employees over 5 years in Power BI with a star schema and DAX measures. Built a self-service dashboard covering attrition drivers, headcount evolution, hiring pipeline, and performance distribution — designed so HR managers can filter without requesting reports from the data team.
+
+**Key findings:**
+- Engineering attrition (18.4%) is 2.3× the company average (8.0%)
+- 62% of departures come from employees with fewer than 2 years tenure — pointing to onboarding gaps, not compensation
+- High performers (Band 4–5) are leaving at nearly the same rate as low performers — a U-shaped attrition curve
+
+---
+
+### 08 · Data Warehouse Design & SQL Optimization
+`SQL` `BigQuery`
+
+Redesigned a flat-file reporting environment (12 unjoined CSVs in BigQuery) into a 3-layer Medallion architecture (Raw → Staging → Marts) using modular SQL CTEs and incremental load patterns. Added data quality checks and documented every table's grain and update frequency.
+
+**Results:**
+- Avg query execution time: **4h 12min → 7min 43sec** after materialized mart tables
+- 98.7% data quality score across 14 monitored tables (vs no monitoring before)
+- Eliminated 4 conflicting revenue definitions — one source of truth across the company
+
+---
+
+### 09 · A/B Testing & Regression — Statistical Rigour in R
+`R`
+
+Rebuilt a flawed product experimentation from scratch after the team declared a "significant" result based on a 4-day underpowered test. Ran a proper two-sample t-test with pre-calculated sample size (n=12,400/group), defined metrics before launch, and applied Bonferroni correction for multiple comparisons. Also ran logistic regression to identify the true conversion drivers.
+
+**Key findings:**
+- The original "significant" result had p = 0.31 under correct analysis — it was noise
+- The confirmed lift (p = 0.018) was real but below the minimum detectable effect for the company's cost of change: **recommendation was not to ship**
+- Device type (mobile vs desktop) was 4× stronger a predictor of conversion than the UI variant
+
+---
+
+### 10 · ETL Pipeline — Apache Airflow + dbt + BigQuery
+`Airflow` `dbt` `BigQuery`
+
+Replaced a 6-hour manual pipeline that failed silently with a fully orchestrated, testable, and documented system. Apache Airflow for scheduling and orchestration, dbt for modular transformation logic with data lineage and 142 automated tests, BigQuery for partitioned/clustered storage, and Slack alerting for instant failure notification.
+
+**Results:**
+- Pipeline runtime: **6h manual → 43min automated**, running daily at 05:00 UTC
+- Mean time to detect failure: **4+ hours → under 3 minutes** (Slack alert with task and error)
+- dbt test suite: 142 tests across 37 models, 98.6% pass rate on production data
+- Data freshness SLA: 99.1% of mornings with fresh data before 06:00 UTC (target: 95%)
 
 ---
 
@@ -90,10 +140,11 @@ A fully custom analytics dashboard built in pure HTML and JavaScript, analyzing 
 | Area | Tools |
 |---|---|
 | Analytics & Reporting | Excel (Advanced), KPI/SLA Analysis, Operational Reporting |
-| Languages | SQL, Python (Pandas, Plotly, Streamlit) |
-| Visualization & BI | Tableau, Power BI, Chart.js, Plotly |
+| Languages | SQL, Python (Pandas, Plotly, Streamlit), R (tidyverse, broom, pwr) |
+| Visualization & BI | Power BI (DAX, star schema), Tableau, Chart.js, Plotly |
+| Data Engineering | Apache Airflow, dbt, BigQuery, ETL pipelines, Medallion architecture |
 | Service Management | ServiceNow, ITIL |
-| Cloud & Data | Google Cloud, Databricks, Neo4j |
+| Cloud & Platforms | Google Cloud, Databricks, Neo4j |
 | Languages spoken | Portuguese (native) · English (B2) · Spanish (professional) |
 
 ---
@@ -114,3 +165,4 @@ A fully custom analytics dashboard built in pure HTML and JavaScript, analyzing 
 - **LinkedIn:** [linkedin.com/in/carlos-maximino](https://www.linkedin.com/in/carlos-maximino/)
 - **Email:** cmax15@outlook.com.br
 - **Location:** Brazil (Campinas region) — open to remote and relocation
+

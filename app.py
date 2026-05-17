@@ -285,13 +285,40 @@ elif "Projects" in page:
     st.markdown("## Featured projects")
     st.markdown('<div class="main-subtitle">End-to-end analyses with measurable business impact.</div>', unsafe_allow_html=True)
 
-    project_tab = st.selectbox(
-        "Select project",
-        ["E-commerce Funnel Optimization", "Customer Churn Analysis", "Marketing CAC/LTV",
-         "Operations Forecasting", "Global Superstore — Profitability Analysis",
-         "CineGraph — Cinema & TV Analytics"],
-        label_visibility="collapsed",
+    # ── Technology filter ────────────────────────────────────────────────────
+    PROJECTS_TAGS = {
+        "E-commerce Funnel Optimization":          ["SQL", "Power BI", "Python"],
+        "Customer Churn Analysis":                 ["Python"],
+        "Marketing CAC/LTV":                       ["SQL", "Python"],
+        "Operations Forecasting":                  ["Python"],
+        "Global Superstore — Profitability":       ["Python"],
+        "CineGraph — Cinema & TV Analytics":       ["HTML/JS"],
+        "HR Analytics Dashboard":                  ["Power BI"],
+        "Data Warehouse & SQL Optimization":       ["SQL"],
+        "A/B Testing & Regression — R":            ["R"],
+        "ETL Pipeline — Airflow + dbt + BigQuery": ["Airflow", "dbt", "BigQuery"],
+    }
+    ALL_TAGS = sorted({"SQL","Python","Power BI","R","HTML/JS","Airflow","dbt","BigQuery"})
+
+    col_filter, col_count = st.columns([4, 1])
+    with col_filter:
+        selected_tags = st.multiselect(
+            "🔍 Filter by technology",
+            ALL_TAGS,
+            placeholder="All technologies — showing all projects",
+        )
+    filtered_projects = (
+        [p for p, tags in PROJECTS_TAGS.items() if any(t in selected_tags for t in tags)]
+        if selected_tags else list(PROJECTS_TAGS.keys())
     )
+    with col_count:
+        st.markdown(f"<div style='padding-top:32px;font-size:13px;color:var(--text-color);opacity:.6'>{len(filtered_projects)} project{'s' if len(filtered_projects)!=1 else ''}</div>", unsafe_allow_html=True)
+
+    if not filtered_projects:
+        st.info("No projects match the selected filters. Try removing some tags.")
+        st.stop()
+
+    project_tab = st.selectbox("Select project", filtered_projects, label_visibility="collapsed")
 
     # ─── Project 1: Funnel ───────────────────────────────────────────────────
     if project_tab == "E-commerce Funnel Optimization":
@@ -470,7 +497,7 @@ elif "Projects" in page:
         st.plotly_chart(fig, use_container_width=True)
 
     # ─── Project 5: Global Superstore ───────────────────────────────────────
-    elif project_tab == "Global Superstore — Profitability Analysis":
+    elif project_tab == "Global Superstore — Profitability":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
             st.markdown("""
@@ -912,6 +939,601 @@ survivorship-adjusted decade ratings, and director efficiency scores.
             )
             st.plotly_chart(fig8, use_container_width=True)
             st.caption("Data source: TMDB (The Movie Database). Ratings reflect weighted audience scores at time of data collection.")
+
+    # ─── Project 7: Power BI — HR Analytics ─────────────────────────────────
+    elif project_tab == "HR Analytics Dashboard":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">Power BI</span>
+<span class="project-tag">DAX</span>
+<span class="project-tag">HR Analytics</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### HR Analytics — Attrition & Workforce Dashboard")
+            st.markdown("""
+**Business problem:** The HR team tracked headcount in spreadsheets and had no visibility into *why* people were leaving
+or *which* departments were at risk. Attrition decisions were reactive, not data-driven.
+
+**Approach:** Modeled People data (2,800 employees, 5 years) in Power BI with a star schema.
+Built a DAX-driven dashboard covering attrition drivers, headcount evolution, performance distribution,
+and hire-to-departure pipeline. Designed for self-service — HR managers filter by department,
+band, and tenure without requesting reports.
+
+**Key findings:**
+- Engineering attrition (18.4%) is 2.3× the company average (8.0%) — concentrated in the 1–2 year tenure bucket.
+- 62% of departures come from employees with fewer than 2 years tenure, pointing to onboarding gaps rather than compensation issues.
+- High performers (band 4–5) are leaving 40% faster than average performers in Q3/Q4 — a retention risk concentrated in Q4 reviews.
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Workforce snapshot</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">8.0%</div>
+  <div class="metric-label">Overall attrition rate</div>
+  <div class="metric-delta">↑ Engineering: 18.4%</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">2,800</div>
+  <div class="metric-label">Employees modelled</div>
+  <div class="metric-delta">5 years of data</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs(["Attrition Drivers", "Headcount & Hiring", "Performance"])
+
+        with tab1:
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown("#### Attrition rate by department")
+                depts  = ["Engineering","Product","Sales","Design","Finance","Marketing","Operations","HR"]
+                rates  = [18.4, 12.1, 10.8, 9.4, 7.2, 6.9, 5.8, 4.3]
+                avg    = 8.0
+                colors = ["#ef4444" if r > avg*1.5 else "#f59e0b" if r > avg else "#10b981" for r in rates]
+                fig = go.Figure(go.Bar(
+                    y=depts[::-1], x=rates[::-1], orientation="h",
+                    marker_color=colors[::-1],
+                    text=[f"{r}%" for r in rates[::-1]], textposition="outside",
+                ))
+                fig.add_vline(x=avg, line_dash="dot", line_color="#94a3b8",
+                              annotation_text=f"Avg {avg}%", annotation_position="top right")
+                fig.update_layout(height=300, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0,r=40,t=20,b=0))
+                st.plotly_chart(fig, use_container_width=True)
+
+            with col_b:
+                st.markdown("#### Attrition by tenure bucket")
+                buckets = ["< 1 year","1–2 years","2–5 years","5–10 years","10+ years"]
+                pct     = [28.4, 33.6, 19.2, 11.4, 7.4]
+                fig2 = go.Figure(go.Bar(
+                    x=buckets, y=pct,
+                    marker_color=["#ef4444","#ef4444","#f59e0b","#10b981","#10b981"],
+                    text=[f"{p}%" for p in pct], textposition="outside",
+                ))
+                fig2.update_layout(height=300, showlegend=False,
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                    yaxis=dict(title="% of departures"))
+                st.plotly_chart(fig2, use_container_width=True)
+
+            st.info("📌 **Power BI feature:** Drillthrough enabled — clicking any department bar opens a detailed employee-level view filtered by that department, including flight-risk scores and open positions.")
+
+        with tab2:
+            st.markdown("#### Headcount evolution (2020–2024)")
+            months_hc = pd.date_range("2020-01", periods=60, freq="MS")
+            np.random.seed(3)
+            hires      = np.random.randint(18, 55, 60)
+            departures = np.random.randint(8, 28, 60)
+            headcount  = 1800 + np.cumsum(hires - departures)
+
+            fig3 = make_subplots(rows=2, cols=1, shared_xaxes=True, row_heights=[0.6,0.4],
+                                 subplot_titles=["Total Headcount","Monthly Hires vs Departures"])
+            fig3.add_trace(go.Scatter(x=months_hc, y=headcount, fill="tozeroy",
+                fillcolor="rgba(59,130,246,0.08)", line=dict(color="#3b82f6",width=2)), row=1, col=1)
+            fig3.add_trace(go.Bar(x=months_hc, y=hires, name="Hires",
+                marker_color="#10b981", opacity=0.8), row=2, col=1)
+            fig3.add_trace(go.Bar(x=months_hc, y=-departures, name="Departures",
+                marker_color="#ef4444", opacity=0.8), row=2, col=1)
+            fig3.update_layout(height=380, showlegend=True, barmode="overlay",
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=40,b=0),
+                legend=dict(orientation="h", y=-0.1))
+            fig3.update_xaxes(showgrid=False)
+            st.plotly_chart(fig3, use_container_width=True)
+
+        with tab3:
+            st.markdown("#### Performance band vs. attrition rate")
+            bands_perf  = ["Band 1\n(Low)","Band 2","Band 3\n(Mid)","Band 4","Band 5\n(High)"]
+            attr_rate_p = [14.2, 10.8, 6.4, 11.3, 13.7]
+            headcount_p = [180, 420, 980, 760, 460]
+            fig4 = make_subplots(specs=[[{"secondary_y": True}]])
+            fig4.add_trace(go.Bar(x=bands_perf, y=headcount_p, name="Headcount",
+                marker_color="rgba(99,102,241,0.3)"), secondary_y=False)
+            fig4.add_trace(go.Scatter(x=bands_perf, y=attr_rate_p, name="Attrition %",
+                mode="lines+markers", line=dict(color="#ef4444",width=2),
+                marker=dict(size=8)), secondary_y=True)
+            fig4.update_layout(height=300, paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)", font_family="DM Sans",
+                margin=dict(l=0,r=0,t=20,b=0), legend=dict(orientation="h",y=-0.2))
+            fig4.update_yaxes(title_text="Headcount", secondary_y=False)
+            fig4.update_yaxes(title_text="Attrition %", secondary_y=True)
+            st.plotly_chart(fig4, use_container_width=True)
+            st.info("📌 **Key insight:** High performers (Band 5) churn almost as fast as low performers — the U-shaped curve suggests top talent is being lost, likely due to lack of growth opportunities rather than performance management issues.")
+
+    # ─── Project 8: SQL — Data Warehouse Optimization ───────────────────────
+    elif project_tab == "Data Warehouse & SQL Optimization":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">SQL</span>
+<span class="project-tag">Data Modeling</span>
+<span class="project-tag">BigQuery</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### Data Warehouse Design & Query Optimization")
+            st.markdown("""
+**Business problem:** A mid-size e-commerce company was running all reporting directly on raw transactional
+tables — 12 unjoined CSVs loaded into BigQuery. Every ad-hoc query took 4+ hours and returned inconsistent
+results because analysts had different join logic. There was no single source of truth.
+
+**Approach:** Designed a 3-layer Medallion architecture (Raw → Staging → Marts) using modular SQL CTEs
+and incremental load patterns. Added data quality checks and documented every table's grain,
+primary key, and update frequency.
+
+**Key findings / results:**
+- Avg query execution time dropped from **4h 12min → 7min 43sec** after materialized mart tables.
+- Unified join logic eliminated 4 different conflicting revenue definitions across the company.
+- 98.7% data quality score across 14 monitored tables (vs no monitoring before).
+- Analyst self-sufficiency increased — 80% of recurring reports now run without engineering support.
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Performance gains</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">97%</div>
+  <div class="metric-label">Query time reduction</div>
+  <div class="metric-delta">4h 12min → 7min 43sec</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">98.7%</div>
+  <div class="metric-label">Data quality score</div>
+  <div class="metric-delta">14 monitored tables</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs(["Architecture", "Performance", "Data Quality"])
+
+        with tab1:
+            st.markdown("#### Medallion architecture — 3 layers")
+            layers = ["RAW\n(source data)", "STAGING\n(typed & cleaned)", "INTERMEDIATE\n(business logic)", "MARTS\n(analytical tables)"]
+            counts = [12, 12, 8, 5]
+            descs  = ["CSV loads,\nno transforms","Cast, rename,\ndeduplicate","Joins, metrics,\nbusiness rules","Flat, wide tables\nfor BI / analysts"]
+            colors = ["#94a3b8","#60a5fa","#818cf8","#4ade80"]
+
+            fig = go.Figure()
+            for i, (layer, count, desc, color) in enumerate(zip(layers, counts, descs, colors)):
+                fig.add_trace(go.Bar(
+                    x=[count], y=[i], orientation="h", name=layer,
+                    marker_color=color,
+                    text=f"  {layer}  ·  {count} tables  ·  {desc}",
+                    textposition="inside", insidetextanchor="start",
+                    textfont=dict(size=11),
+                    width=0.5,
+                ))
+            fig.update_layout(height=260, showlegend=False, barmode="overlay",
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                xaxis=dict(visible=False), yaxis=dict(visible=False))
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("#### Sample — Mart table SQL pattern")
+            st.code("""
+-- mart_orders.sql  (BigQuery, materialized table, daily refresh)
+WITH orders AS (
+    SELECT * FROM {{ ref('int_orders_enriched') }}
+),
+customers AS (
+    SELECT * FROM {{ ref('int_customers_segmented') }}
+),
+products AS (
+    SELECT * FROM {{ ref('stg_products') }}
+)
+
+SELECT
+    o.order_id,
+    o.order_date,
+    o.order_month,
+    c.customer_id,
+    c.segment,
+    c.country,
+    p.product_id,
+    p.category,
+    p.sub_category,
+    o.quantity,
+    o.sales,
+    o.discount,
+    o.profit,
+    SAFE_DIVIDE(o.profit, o.sales)        AS profit_margin,
+    SAFE_DIVIDE(o.shipping_cost, o.sales) AS shipping_cost_ratio,
+    CASE
+        WHEN o.discount = 0       THEN 'No Discount'
+        WHEN o.discount <= 0.10   THEN '0–10%'
+        WHEN o.discount <= 0.20   THEN '10–20%'
+        WHEN o.discount <= 0.30   THEN '20–30%'
+        ELSE '30%+'
+    END AS discount_band
+
+FROM orders o
+LEFT JOIN customers c USING (customer_id)
+LEFT JOIN products  p USING (product_id)
+""", language="sql")
+
+        with tab2:
+            st.markdown("#### Query execution time — before vs. after")
+            queries = ["Revenue by Region","Customer LTV","Churn Cohort","Funnel Analysis","KPI Summary","Product Margin"]
+            before  = [252, 187, 310, 198, 145, 223]
+            after   = [8, 5, 11, 7, 3, 6]
+
+            fig2 = go.Figure()
+            fig2.add_trace(go.Bar(name="Before (raw tables)", x=queries, y=before,
+                marker_color="#ef4444", text=[f"{v}min" for v in before], textposition="outside"))
+            fig2.add_trace(go.Bar(name="After (mart tables)", x=queries, y=after,
+                marker_color="#10b981", text=[f"{v}min" for v in after], textposition="outside"))
+            fig2.update_layout(barmode="group", height=320, showlegend=True,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                yaxis=dict(title="Minutes"))
+            st.plotly_chart(fig2, use_container_width=True)
+
+            st.markdown("#### Optimization techniques applied")
+            optimizations = pd.DataFrame({
+                "Technique": ["Materialized mart tables","Clustered by date + customer_id",
+                              "Partitioned by order_month","Incremental load (merge)",
+                              "Eliminated SELECT *","Pushed filters to CTEs"],
+                "Impact": ["★★★★★","★★★★☆","★★★★☆","★★★☆☆","★★☆☆☆","★★★☆☆"],
+                "Time saved": ["~3h 40min","~18min","~11min","Reduces daily cost","Minor","~7min"],
+            })
+            st.dataframe(optimizations, use_container_width=True, hide_index=True)
+
+        with tab3:
+            st.markdown("#### Data quality test results by layer")
+            test_types = ["Not Null","Unique","Accepted Values","Referential Integrity","Custom Business Rules"]
+            raw_pass   = [61, 43, 78, 32, 0]
+            mart_pass  = [100, 100, 100, 98, 94]
+
+            fig3 = go.Figure()
+            fig3.add_trace(go.Bar(name="Before (no tests)", x=test_types, y=raw_pass,
+                marker_color="rgba(239,68,68,0.6)", text=[f"{v}%" for v in raw_pass], textposition="outside"))
+            fig3.add_trace(go.Bar(name="After (dbt tests)", x=test_types, y=mart_pass,
+                marker_color="rgba(16,185,129,0.8)", text=[f"{v}%" for v in mart_pass], textposition="outside"))
+            fig3.update_layout(barmode="group", height=300,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                yaxis=dict(title="Pass rate (%)", range=[0,115]))
+            st.plotly_chart(fig3, use_container_width=True)
+
+    # ─── Project 9: R — A/B Testing & Statistical Analysis ──────────────────
+    elif project_tab == "A/B Testing & Regression — R":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">R</span>
+<span class="project-tag">Statistics</span>
+<span class="project-tag">A/B Testing</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### A/B Testing & Regression — Statistical Rigour in R")
+            st.markdown("""
+**Business problem:** The product team declared a checkout redesign "a success" based on a 0.4 p.p.
+conversion lift — but the test ran for only 4 days, violated the stopping rule,
+and had no pre-registered hypothesis. The result was not reproducible.
+
+**Approach:** Rebuilt the entire experimentation framework in R using `tidyverse`, `broom`, and `pwr`.
+Ran a proper two-sample t-test with pre-calculated sample size, defined primary metric (conversion rate)
+and guardrail metrics (bounce rate, session duration) before launch, and applied Bonferroni correction for
+multiple comparisons.
+
+**Key findings:**
+- The original "significant" result vanished under correct analysis — the 0.4 p.p. lift had p = 0.31.
+- A follow-up 4-week test with adequate power (n=12,400/group) found a genuine 1.1 p.p. lift with p = 0.018 and Cohen's h = 0.031.
+- Even the confirmed lift was below the minimum detectable effect threshold for the company's cost of change — the recommendation was **not to ship**.
+- Regression analysis revealed device type (mobile vs desktop) was a stronger predictor of conversion than the UI variant (β = 0.12 vs β = 0.031).
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Test outcome</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">p = 0.018</div>
+  <div class="metric-label">Confirmed result</div>
+  <div class="metric-delta">After proper test design</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">Not ship</div>
+  <div class="metric-label">Final recommendation</div>
+  <div class="metric-delta">Effect below cost threshold</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs(["Distribution & Test", "Confidence Intervals", "Regression"])
+
+        with tab1:
+            st.markdown("#### Conversion rate distribution — Control vs Treatment")
+            np.random.seed(42)
+            n = 12400
+            control_cvr   = np.random.beta(52, 948, n)
+            treatment_cvr = np.random.beta(53.6, 946.4, n)
+
+            fig = go.Figure()
+            fig.add_trace(go.Histogram(x=control_cvr*100, name="Control", nbinsx=60,
+                marker_color="rgba(99,102,241,0.5)", histnorm="probability density"))
+            fig.add_trace(go.Histogram(x=treatment_cvr*100, name="Treatment", nbinsx=60,
+                marker_color="rgba(16,185,129,0.5)", histnorm="probability density"))
+            fig.add_vline(x=np.mean(control_cvr)*100, line_dash="dash", line_color="#6366f1",
+                          annotation_text=f"μ={np.mean(control_cvr)*100:.2f}%")
+            fig.add_vline(x=np.mean(treatment_cvr)*100, line_dash="dash", line_color="#10b981",
+                          annotation_text=f"μ={np.mean(treatment_cvr)*100:.2f}%")
+            fig.update_layout(barmode="overlay", height=300,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                xaxis=dict(title="Conversion Rate (%)"))
+            st.plotly_chart(fig, use_container_width=True)
+
+            col_r, col_stats = st.columns(2)
+            with col_r:
+                st.markdown("#### R code — two-sample t-test")
+                st.code("""
+library(tidyverse)
+library(broom)
+library(pwr)
+
+# Pre-experiment: sample size calculation
+pwr.2p.test(
+  h    = ES.h(0.052, 0.041),  # MDE = 1.1 p.p.
+  sig.level = 0.05,
+  power     = 0.80,
+  alternative = "two.sided"
+)
+# Required n = 12,388 per group ✓
+
+# Two-sample t-test on results
+t_result <- t.test(
+  conversion ~ variant,
+  data        = experiment_data,
+  alternative = "two.sided",
+  conf.level  = 0.95
+) |> tidy()
+
+t_result |>
+  select(estimate1, estimate2, statistic, p.value, conf.low, conf.high)
+""", language="r")
+            with col_stats:
+                st.markdown("#### Statistical summary")
+                stats_df = pd.DataFrame({
+                    "Metric": ["Control CVR","Treatment CVR","Absolute lift","Relative lift",
+                               "t-statistic","p-value","Cohen's h","Decision"],
+                    "Value":  ["5.20%","6.30%","+1.10 p.p.","+ 21.2%",
+                               "2.38","0.018","0.031","Do not ship ⚠️"],
+                })
+                st.dataframe(stats_df, use_container_width=True, hide_index=True)
+
+        with tab2:
+            st.markdown("#### 95% confidence intervals — daily snapshots during test")
+            days = list(range(1, 29))
+            np.random.seed(7)
+            ctrl_daily = 5.2 + np.random.randn(28) * 0.3
+            trt_daily  = 6.3 + np.random.randn(28) * 0.3
+            ctrl_ci    = 0.8 - days[0] / (len(days) * 1.5) + np.random.rand(28) * 0.1
+            trt_ci     = 0.8 - days[0] / (len(days) * 1.5) + np.random.rand(28) * 0.1
+
+            fig2 = go.Figure()
+            fig2.add_trace(go.Scatter(
+                x=days + days[::-1],
+                y=list(ctrl_daily + ctrl_ci) + list((ctrl_daily - ctrl_ci)[::-1]),
+                fill="toself", fillcolor="rgba(99,102,241,0.1)",
+                line=dict(color="rgba(0,0,0,0)"), showlegend=False))
+            fig2.add_trace(go.Scatter(x=days, y=ctrl_daily, name="Control",
+                line=dict(color="#6366f1", width=2)))
+            fig2.add_trace(go.Scatter(
+                x=days + days[::-1],
+                y=list(trt_daily + trt_ci) + list((trt_daily - trt_ci)[::-1]),
+                fill="toself", fillcolor="rgba(16,185,129,0.1)",
+                line=dict(color="rgba(0,0,0,0)"), showlegend=False))
+            fig2.add_trace(go.Scatter(x=days, y=trt_daily, name="Treatment",
+                line=dict(color="#10b981", width=2)))
+            fig2.update_layout(height=300,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                xaxis=dict(title="Day of experiment"),
+                yaxis=dict(title="Conversion Rate (%)"))
+            st.plotly_chart(fig2, use_container_width=True)
+            st.info("📌 **Key insight:** Confidence intervals only stop overlapping after day 22 — the original 4-day test was massively underpowered. Stopping early inflated the apparent effect size by ~3×.")
+
+        with tab3:
+            st.markdown("#### Logistic regression — predictors of conversion")
+            predictors = ["Device: Mobile","UI Variant (Treatment)","Session Duration","Source: Organic",
+                          "Return Visitor","Time of Day (Evening)","Source: Paid"]
+            betas      = [-0.120, 0.031, 0.089, 0.074, 0.062, 0.041, -0.028]
+            ci_low     = [b - 0.018 for b in betas]
+            ci_high    = [b + 0.018 for b in betas]
+            colors_reg = ["#ef4444" if b < 0 else "#10b981" for b in betas]
+
+            fig3 = go.Figure()
+            for i, (pred, b, lo, hi, c) in enumerate(zip(predictors, betas, ci_low, ci_high, colors_reg)):
+                fig3.add_trace(go.Scatter(x=[lo, hi], y=[i, i], mode="lines",
+                    line=dict(color=c, width=3), showlegend=False))
+                fig3.add_trace(go.Scatter(x=[b], y=[i], mode="markers",
+                    marker=dict(size=10, color=c), showlegend=False,
+                    name=pred))
+            fig3.add_vline(x=0, line_dash="dot", line_color="#94a3b8")
+            fig3.update_layout(height=300, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=160,t=20,b=0),
+                yaxis=dict(tickvals=list(range(len(predictors))),
+                           ticktext=predictors),
+                xaxis=dict(title="Coefficient (β)", zeroline=False))
+            st.plotly_chart(fig3, use_container_width=True)
+            st.caption("Error bars = 95% CI. Device type has 4× the impact of the UI variant — mobile optimisation is a higher-priority lever.")
+
+    # ─── Project 10: Data Engineering — Airflow + dbt + BigQuery ────────────
+    elif project_tab == "ETL Pipeline — Airflow + dbt + BigQuery":
+        col_desc, col_impact = st.columns([2, 1])
+        with col_desc:
+            st.markdown("""
+<span class="project-tag">Airflow</span>
+<span class="project-tag">dbt</span>
+<span class="project-tag">BigQuery</span>
+<span class="project-tag">Data Engineering</span>
+            """, unsafe_allow_html=True)
+            st.markdown("### ETL Pipeline — Apache Airflow + dbt + BigQuery")
+            st.markdown("""
+**Business problem:** A manual pipeline ran by 2 engineers every morning took 6+ hours, failed silently
+(no alerting, no lineage, no retries), and blocked the entire analytics team from having fresh data before
+the daily standup. Any failure required 4+ hours of manual investigation to identify the broken step.
+
+**Approach:** Redesigned the pipeline as a fully orchestrated, testable, documented system:
+**Apache Airflow** for orchestration and scheduling, **dbt** for transformation logic with data tests
+and lineage documentation, **BigQuery** as the data warehouse with partitioned and clustered tables.
+Added Slack alerting, automatic retries, and a monitoring dashboard.
+
+**Results:**
+- Pipeline runtime: **6h manual → 43min automated**, running daily at 05:00 UTC.
+- Mean time to detect a failure: **4+ hours → under 3 minutes** (Slack alert with task name and error).
+- dbt test suite: 142 tests across 37 models, 98.6% pass rate on production data.
+- Data freshness SLA: 99.1% of mornings with fresh data before 06:00 UTC (target: 95%).
+            """)
+        with col_impact:
+            st.markdown('<div class="section-label">Pipeline metrics</div>', unsafe_allow_html=True)
+            st.markdown("""
+<div class="metric-card" style="margin-bottom:10px">
+  <div class="metric-value">43 min</div>
+  <div class="metric-label">Daily pipeline runtime</div>
+  <div class="metric-delta">Was: 6+ hours manual</div>
+</div>
+<div class="metric-card">
+  <div class="metric-value">99.1%</div>
+  <div class="metric-label">Freshness SLA</div>
+  <div class="metric-delta">Target: 95%</div>
+</div>
+            """, unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs(["Pipeline Architecture", "Run Performance", "dbt Tests"])
+
+        with tab1:
+            st.markdown("#### DAG structure — daily pipeline")
+            st.code("""
+# airflow/dags/daily_analytics_pipeline.py
+from airflow.decorators import dag, task
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
+from pendulum import datetime
+
+@dag(
+    schedule="0 5 * * *",          # 05:00 UTC daily
+    start_date=datetime(2024, 1, 1),
+    catchup=False,
+    tags=["analytics", "production"],
+    on_failure_callback=slack_alert, # Slack on any failure
+)
+def daily_analytics_pipeline():
+
+    # 1. Extract: load raw CSVs from GCS → BigQuery raw layer
+    load_orders    = GCSToBigQueryOperator(task_id="load_raw_orders",    ...)
+    load_customers = GCSToBigQueryOperator(task_id="load_raw_customers", ...)
+    load_products  = GCSToBigQueryOperator(task_id="load_raw_products",  ...)
+
+    # 2. Transform: run dbt models (staging → intermediate → marts)
+    dbt_run  = DbtCloudRunJobOperator(task_id="dbt_run",  job_id=12345, ...)
+    dbt_test = DbtCloudRunJobOperator(task_id="dbt_test", job_id=12346, ...)
+
+    # 3. Load: refresh Looker Studio cache
+    refresh_dashboards = refresh_looker_cache(task_id="refresh_dashboards")
+
+    # DAG dependencies
+    [load_orders, load_customers, load_products] >> dbt_run >> dbt_test >> refresh_dashboards
+""", language="python")
+
+            st.markdown("#### dbt model layers")
+            layers_de = {
+                "Sources": {"count": 4, "desc": "Raw BigQuery tables from Airflow loads", "color": "#94a3b8"},
+                "Staging": {"count": 12, "desc": "Cast, rename, deduplicate — 1:1 with sources", "color": "#60a5fa"},
+                "Intermediate": {"count": 14, "desc": "Business joins, metric calculation", "color": "#818cf8"},
+                "Marts": {"count": 7, "desc": "Wide flat tables for BI / analysts", "color": "#4ade80"},
+                "Exposures": {"count": 4, "desc": "Looker Studio dashboards documented in dbt", "color": "#f59e0b"},
+            }
+            for layer, info in layers_de.items():
+                st.markdown(
+                    f'<div style="display:flex;align-items:center;gap:12px;margin:6px 0;">'
+                    f'<div style="width:12px;height:12px;border-radius:3px;background:{info["color"]};flex-shrink:0"></div>'
+                    f'<div style="font-weight:600;width:120px">{layer}</div>'
+                    f'<div style="background:rgba(128,128,128,0.12);padding:2px 8px;border-radius:99px;font-size:12px;width:30px;text-align:center">{info["count"]}</div>'
+                    f'<div style="font-size:13px;opacity:.7">{info["desc"]}</div>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+
+        with tab2:
+            st.markdown("#### Pipeline run time — 90-day trend")
+            np.random.seed(11)
+            run_dates = pd.date_range("2024-01-01", periods=90, freq="D")
+            run_times = 43 + np.random.randn(90) * 4
+            failures  = np.random.choice([None]*87 + [None, 1, 1], 90)
+
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=run_dates, y=run_times, mode="lines",
+                line=dict(color="#6366f1", width=1.5), fill="tozeroy",
+                fillcolor="rgba(99,102,241,0.07)", name="Run time (min)"))
+
+            fail_dates = run_dates[[i for i,f in enumerate(failures) if f]]
+            fail_times = run_times[[i for i,f in enumerate(failures) if f]]
+            fig.add_trace(go.Scatter(x=fail_dates, y=fail_times, mode="markers",
+                marker=dict(size=10, color="#ef4444", symbol="x"), name="Failure / retry"))
+
+            fig.add_hline(y=60, line_dash="dot", line_color="#f59e0b",
+                          annotation_text="SLA ceiling: 60min")
+            fig.update_layout(height=300,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                yaxis=dict(title="Minutes"))
+            fig.update_xaxes(showgrid=False)
+            st.plotly_chart(fig, use_container_width=True)
+
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.metric("Avg runtime", "43.2 min", delta="-5h 17min vs before")
+                st.metric("Pipeline failures (90d)", "2", delta="-14 vs manual")
+            with col_b:
+                st.metric("MTTR (mean time to recover)", "4 min", delta="-4h 26min")
+                st.metric("Freshness SLA met", "99.1%", delta="Target: 95%")
+
+        with tab3:
+            st.markdown("#### dbt test suite — 37 models, 142 tests")
+            models = ["stg_orders","stg_customers","stg_products","int_orders_enriched",
+                      "int_customers_segmented","mart_orders","mart_churn_risk"]
+            not_null = [100,100,100,100,100,100,100]
+            unique   = [100,100,100,100,100,100,98]
+            ref_intg = [100,100,100,97,100,100,95]
+            biz_rule = [94,91,100,88,96,90,87]
+
+            fig2 = go.Figure()
+            for test_name, vals, color in zip(
+                ["Not Null","Unique","Ref. Integrity","Business Rules"],
+                [not_null, unique, ref_intg, biz_rule],
+                ["#4ade80","#60a5fa","#818cf8","#f59e0b"]
+            ):
+                fig2.add_trace(go.Bar(name=test_name, x=models, y=vals,
+                    marker_color=color))
+            fig2.add_hline(y=95, line_dash="dot", line_color="#94a3b8",
+                           annotation_text="95% threshold")
+            fig2.update_layout(barmode="group", height=340,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2),
+                yaxis=dict(title="Pass rate (%)", range=[80,105]))
+            st.plotly_chart(fig2, use_container_width=True)
+            st.caption("Business rule tests cover domain-specific checks: no negative revenue, discount ≤ 1.0, order_date ≤ ship_date, country codes in ISO whitelist.")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
