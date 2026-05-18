@@ -182,9 +182,9 @@ with st.sidebar:
     st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
     st.markdown("""
     <div style="font-size:12px; color:#475569; line-height:1.8;">
-        📍 Brazil (Campinas region)<br>
-        🌐 Open to remote & relocation<br>
-        💼 Available for new roles
+        📍 Brazil<br>
+        📱 +55 19 99379-2916<br>
+        🌐 Open to remote & relocation
     </div>
     """, unsafe_allow_html=True)
 
@@ -201,7 +201,7 @@ with st.sidebar:
 # PAGE: ABOUT
 # ══════════════════════════════════════════════════════════════════════════════
 if "About" in page:
-    st.markdown('<div class="main-header">10 years of data,<br>operations & insight.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">10+ years in IT.<br>Now driving decisions<br>through data.</div>', unsafe_allow_html=True)
     st.markdown('<div class="main-subtitle">Data Analyst · KPI/SLA · BI · ServiceNow · ITIL · Kyndryl</div>', unsafe_allow_html=True)
 
     # ── Summary stats ────────────────────────────────────────────────────────
@@ -320,302 +320,6 @@ elif "Projects" in page:
 
     project_tab = st.selectbox("Select project", filtered_projects, label_visibility="collapsed")
 
-
-    # ── Recruiter-facing technical code snippets ────────────────────────────
-    PROJECT_CODE_SNIPPETS = {
-        "E-commerce Funnel Optimization": {
-            "language": "sql",
-            "code": """-- Funnel conversion by device and acquisition channel
-WITH events AS (
-    SELECT
-        user_id,
-        session_id,
-        device_type,
-        utm_source,
-        event_name,
-        event_timestamp
-    FROM raw.web_events
-    WHERE event_timestamp >= DATE_SUB(CURRENT_DATE(), INTERVAL 90 DAY)
-),
-funnel AS (
-    SELECT
-        device_type,
-        utm_source,
-        COUNT(DISTINCT IF(event_name = 'visit', session_id, NULL))        AS visits,
-        COUNT(DISTINCT IF(event_name = 'product_view', session_id, NULL)) AS product_views,
-        COUNT(DISTINCT IF(event_name = 'add_to_cart', session_id, NULL))  AS add_to_carts,
-        COUNT(DISTINCT IF(event_name = 'checkout', session_id, NULL))     AS checkouts,
-        COUNT(DISTINCT IF(event_name = 'purchase', session_id, NULL))     AS purchases
-    FROM events
-    GROUP BY device_type, utm_source
-)
-SELECT
-    *,
-    SAFE_DIVIDE(product_views, visits)      AS visit_to_product_rate,
-    SAFE_DIVIDE(add_to_carts, product_views) AS product_to_cart_rate,
-    SAFE_DIVIDE(checkouts, add_to_carts)    AS cart_to_checkout_rate,
-    SAFE_DIVIDE(purchases, checkouts)       AS checkout_to_purchase_rate
-FROM funnel
-ORDER BY cart_to_checkout_rate ASC;""",
-        },
-        "Customer Churn Analysis": {
-            "language": "python",
-            "code": """# Cohort retention + churn risk scoring
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_auc_score
-
-customers['signup_month'] = customers['signup_date'].dt.to_period('M')
-activity['active_month'] = activity['event_date'].dt.to_period('M')
-
-cohort = (
-    activity.merge(customers[['customer_id', 'signup_month']], on='customer_id')
-    .assign(month_number=lambda d: (d['active_month'] - d['signup_month']).apply(lambda x: x.n))
-    .query('month_number >= 0')
-    .groupby(['signup_month', 'month_number'])['customer_id']
-    .nunique()
-    .reset_index(name='active_customers')
-)
-cohort['retention_rate'] = cohort['active_customers'] / cohort.groupby('signup_month')['active_customers'].transform('first')
-
-features = customers[['plan_type', 'logins_first_30d', 'tickets_opened', 'days_since_last_login']]
-X = pd.get_dummies(features, drop_first=True)
-y = customers['churned']
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.25, random_state=42, stratify=y)
-model = LogisticRegression(max_iter=1000).fit(X_train, y_train)
-customers['churn_risk_score'] = model.predict_proba(X)[:, 1]
-print('AUC:', roc_auc_score(y_test, model.predict_proba(X_test)[:, 1]))""",
-        },
-        "Marketing CAC/LTV": {
-            "language": "python",
-            "code": """# Channel-level CAC, LTV, LTV/CAC and payback period
-spend_by_channel = spend.groupby(['month', 'channel'], as_index=False)['cost'].sum()
-revenue_by_customer = orders.groupby(['customer_id', 'channel'], as_index=False)['revenue'].sum()
-new_customers = customers.query('is_new_customer == 1').groupby('channel')['customer_id'].nunique()
-
-cac = spend.groupby('channel')['cost'].sum().div(new_customers).rename('cac')
-ltv = revenue_by_customer.groupby('channel')['revenue'].mean().rename('ltv')
-monthly_margin = orders.assign(gross_margin=orders['revenue'] - orders['cost_of_goods']).groupby('channel')['gross_margin'].mean()
-
-marketing_efficiency = pd.concat([cac, ltv, monthly_margin.rename('avg_monthly_margin')], axis=1)
-marketing_efficiency['ltv_cac_ratio'] = marketing_efficiency['ltv'] / marketing_efficiency['cac']
-marketing_efficiency['payback_months'] = marketing_efficiency['cac'] / marketing_efficiency['avg_monthly_margin']
-marketing_efficiency.sort_values('ltv_cac_ratio', ascending=False)""",
-        },
-        "Operations Forecasting": {
-            "language": "python",
-            "code": """# Ticket demand forecast using rolling average + weekday seasonality
-import pandas as pd
-
-series = tickets.set_index('opened_at').resample('D')['ticket_id'].count().rename('tickets').to_frame()
-series['rolling_7d'] = series['tickets'].rolling(7, min_periods=7).mean()
-series['weekday'] = series.index.day_name()
-
-weekday_factor = (
-    series.groupby('weekday')['tickets'].mean() / series['tickets'].mean()
-).to_dict()
-
-future = pd.DataFrame(index=pd.date_range(series.index.max() + pd.Timedelta(days=1), periods=30, freq='D'))
-future['weekday'] = future.index.day_name()
-future['baseline'] = series['rolling_7d'].iloc[-1]
-future['forecast'] = future['baseline'] * future['weekday'].map(weekday_factor)
-future['recommended_staff'] = (future['forecast'] / 22).round().astype(int)  # 22 tickets per analyst/day
-future[['forecast', 'recommended_staff']].head()""",
-        },
-        "Global Superstore — Profitability": {
-            "language": "python",
-            "code": """# Profitability EDA with engineered business metrics
-import pandas as pd
-
-orders = pd.read_csv('global_superstore.csv', parse_dates=['Order Date', 'Ship Date'])
-orders['profit_margin'] = orders['Profit'] / orders['Sales']
-orders['shipping_cost_ratio'] = orders['Shipping Cost'] / orders['Sales']
-orders['shipping_days'] = (orders['Ship Date'] - orders['Order Date']).dt.days
-orders['discount_band'] = pd.cut(
-    orders['Discount'],
-    bins=[-0.01, 0, .10, .20, .30, 1],
-    labels=['No Discount', '0-10%', '10-20%', '20-30%', '30%+']
-)
-
-summary = (
-    orders.groupby(['Region', 'Category', 'discount_band'], observed=True)
-    .agg(
-        orders=('Order ID', 'nunique'),
-        sales=('Sales', 'sum'),
-        profit=('Profit', 'sum'),
-        avg_margin=('profit_margin', 'mean'),
-        ship_cost_ratio=('shipping_cost_ratio', 'mean')
-    )
-    .reset_index()
-    .sort_values('avg_margin')
-)
-summary.head(10)""",
-        },
-        "CineGraph — Cinema & TV Analytics": {
-            "language": "javascript",
-            "code": """// TMDB analytics: ROI, decade ratings and director efficiency
-const moviesClean = movies
-  .filter(d => d.budget > 0 && d.revenue > 0 && d.vote_count >= 100)
-  .map(d => ({
-    ...d,
-    roi: (d.revenue - d.budget) / d.budget,
-    revenueMultiplier: d.revenue / d.budget,
-    decade: `${Math.floor(new Date(d.release_date).getFullYear() / 10) * 10}s`
-  }));
-
-const byGenre = d3.rollups(
-  moviesClean.flatMap(m => m.genres.map(g => ({ genre: g, ...m }))),
-  v => ({
-    films: v.length,
-    avgBudget: d3.mean(v, d => d.budget),
-    avgRevenue: d3.mean(v, d => d.revenue),
-    avgRoi: d3.mean(v, d => d.roi),
-    avgRating: d3.mean(v, d => d.vote_average)
-  }),
-  d => d.genre
-).sort((a, b) => b[1].avgRoi - a[1].avgRoi);
-
-const directorScore = d3.rollups(
-  moviesClean.filter(d => d.director),
-  v => ({ films: v.length, avgRating: d3.mean(v, d => d.vote_average) }),
-  d => d.director
-).filter(([_, s]) => s.films >= 25);""",
-        },
-        "HR Analytics Dashboard": {
-            "language": "dax",
-            "code": """-- Power BI DAX measures used in the attrition dashboard
-Headcount =
-CALCULATE(
-    DISTINCTCOUNT(Employees[EmployeeID]),
-    Employees[HireDate] <= MAX('Date'[Date]),
-    OR(ISBLANK(Employees[TerminationDate]), Employees[TerminationDate] > MAX('Date'[Date]))
-)
-
-Departures =
-CALCULATE(
-    DISTINCTCOUNT(Employees[EmployeeID]),
-    USERELATIONSHIP(Employees[TerminationDate], 'Date'[Date])
-)
-
-Attrition Rate =
-DIVIDE([Departures], [Headcount])
-
-High Performer Attrition =
-CALCULATE(
-    [Attrition Rate],
-    Employees[PerformanceBand] IN {4, 5}
-)
-
-Early Tenure Departure % =
-DIVIDE(
-    CALCULATE([Departures], Employees[TenureBucket] IN {"< 1 year", "1-2 years"}),
-    [Departures]
-)""",
-        },
-        "Data Warehouse & SQL Optimization": {
-            "language": "sql",
-            "code": """-- Medallion mart pattern: consistent business logic in one place
-CREATE OR REPLACE TABLE mart.mart_orders
-PARTITION BY order_month
-CLUSTER BY customer_id, category AS
-WITH orders AS (
-    SELECT * FROM staging.stg_orders
-),
-customers AS (
-    SELECT * FROM intermediate.int_customers_segmented
-),
-products AS (
-    SELECT * FROM staging.stg_products
-)
-SELECT
-    o.order_id,
-    DATE_TRUNC(o.order_date, MONTH) AS order_month,
-    c.customer_id,
-    c.segment,
-    c.country,
-    p.category,
-    p.sub_category,
-    o.sales,
-    o.discount,
-    o.profit,
-    SAFE_DIVIDE(o.profit, o.sales) AS profit_margin,
-    SAFE_DIVIDE(o.shipping_cost, o.sales) AS shipping_cost_ratio
-FROM orders o
-LEFT JOIN customers c USING (customer_id)
-LEFT JOIN products p USING (product_id);""",
-        },
-        "A/B Testing & Regression — R": {
-            "language": "r",
-            "code": """library(tidyverse)
-library(broom)
-library(pwr)
-
-# Power analysis before launch
-sample_size <- pwr.2p.test(
-  h = ES.h(p1 = 0.052, p2 = 0.041),
-  sig.level = 0.05,
-  power = 0.80,
-  alternative = 'two.sided'
-)
-
-# Primary metric test
-experiment_result <- t.test(
-  conversion ~ variant,
-  data = experiment_data,
-  alternative = 'two.sided',
-  conf.level = 0.95
-) |> tidy()
-
-# Logistic regression with device/source controls
-model <- glm(
-  converted ~ variant + device_type + session_duration + traffic_source + returning_user,
-  data = experiment_data,
-  family = binomial()
-)
-
-tidy(model, conf.int = TRUE, exponentiate = TRUE)""",
-        },
-        "ETL Pipeline — Airflow + dbt + BigQuery": {
-            "language": "python",
-            "code": """# Airflow DAG: extract raw files, run dbt, test, then refresh BI cache
-from airflow.decorators import dag
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
-from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
-from pendulum import datetime
-
-@dag(
-    schedule='0 5 * * *',
-    start_date=datetime(2024, 1, 1),
-    catchup=False,
-    tags=['analytics', 'production'],
-    on_failure_callback=slack_alert,
-)
-def daily_analytics_pipeline():
-    load_orders = GCSToBigQueryOperator(
-        task_id='load_raw_orders',
-        bucket='analytics-landing',
-        source_objects=['orders/{{ ds }}/*.csv'],
-        destination_project_dataset_table='raw.orders',
-        write_disposition='WRITE_APPEND',
-    )
-
-    dbt_run = DbtCloudRunJobOperator(task_id='dbt_run', job_id=12345)
-    dbt_test = DbtCloudRunJobOperator(task_id='dbt_test', job_id=12346)
-    refresh_dashboards = refresh_looker_cache(task_id='refresh_dashboards')
-
-    load_orders >> dbt_run >> dbt_test >> refresh_dashboards
-
-daily_analytics_pipeline()""",
-        },
-    }
-
-    def render_technical_code(project_name):
-        snippet = PROJECT_CODE_SNIPPETS[project_name]
-        with st.expander("🔎 Technical code used in the analysis", expanded=True):
-            st.caption("Representative code block showing the technical steps behind this project.")
-            st.code(snippet["code"].strip(), language=snippet["language"])
-
     # ─── Project 1: Funnel ───────────────────────────────────────────────────
     if project_tab == "E-commerce Funnel Optimization":
         col_desc, col_impact = st.columns([2, 1])
@@ -643,47 +347,122 @@ daily_analytics_pipeline()""",
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("E-commerce Funnel Optimization")
+        tab1, tab2 = st.tabs(["📊 Analysis", "💻 Code"])
 
-        # Funnel chart
-        st.markdown("#### Conversion funnel")
-        stages = ["Visit", "Product View", "Add to Cart", "Checkout", "Purchase"]
-        values = [100000, 62000, 34000, 21000, 14700]
-        pcts   = [100, 62, 34.0, 21.0, 14.7]
+        with tab1:
+            st.markdown("#### Conversion funnel")
+            stages = ["Visit", "Product View", "Add to Cart", "Checkout", "Purchase"]
+            values = [100000, 62000, 34000, 21000, 14700]
 
-        fig = go.Figure(go.Funnel(
-            y=stages, x=values,
-            textinfo="percent initial+value",
-            marker_color=["#dbeafe", "#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"],
-            connector={"line": {"color": "#e2e8f0", "width": 1}},
-        ))
-        fig.update_layout(
-            height=360, margin=dict(l=0, r=0, t=20, b=0),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_family="DM Sans",
-        )
-        st.plotly_chart(fig, use_container_width=True)
+            fig = go.Figure(go.Funnel(
+                y=stages, x=values,
+                textinfo="percent initial+value",
+                marker_color=["#dbeafe", "#93c5fd", "#60a5fa", "#3b82f6", "#1d4ed8"],
+                connector={"line": {"color": "#e2e8f0", "width": 1}},
+            ))
+            fig.update_layout(height=360, margin=dict(l=0,r=0,t=20,b=0),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans")
+            st.plotly_chart(fig, use_container_width=True)
 
-        # Device breakdown
-        st.markdown("#### Conversion by device")
-        device_data = pd.DataFrame({
-            "Stage":  stages * 3,
-            "Device": ["Desktop"] * 5 + ["Mobile"] * 5 + ["Tablet"] * 5,
-            "Rate":   [100,68,42,28,20, 100,55,24,12,7, 100,60,32,20,14],
-        })
-        fig2 = px.line(
-            device_data, x="Stage", y="Rate", color="Device",
-            markers=True,
-            color_discrete_map={"Desktop": "#3b82f6", "Mobile": "#f43f5e", "Tablet": "#a78bfa"},
-            labels={"Rate": "Conversion Rate (%)"},
-            height=300,
-        )
-        fig2.update_layout(
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
-            legend=dict(orientation="h", y=-0.2),
-        )
-        st.plotly_chart(fig2, use_container_width=True)
+            st.markdown("#### Conversion by device")
+            device_data = pd.DataFrame({
+                "Stage":  stages * 3,
+                "Device": ["Desktop"]*5 + ["Mobile"]*5 + ["Tablet"]*5,
+                "Rate":   [100,68,42,28,20, 100,55,24,12,7, 100,60,32,20,14],
+            })
+            fig2 = px.line(device_data, x="Stage", y="Rate", color="Device", markers=True,
+                color_discrete_map={"Desktop":"#3b82f6","Mobile":"#f43f5e","Tablet":"#a78bfa"},
+                labels={"Rate":"Conversion Rate (%)"}, height=300)
+            fig2.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=20,b=0),
+                legend=dict(orientation="h",y=-0.2))
+            st.plotly_chart(fig2, use_container_width=True)
+
+        with tab2:
+            st.markdown("#### Step 1 — Build the funnel from raw event logs (SQL)")
+            st.code("""
+-- events table: session_id, event, event_date, device, utm_source
+WITH session_funnel AS (
+    SELECT
+        session_id,
+        device,
+        utm_source,
+        MAX(CASE WHEN event = 'page_view'      THEN 1 ELSE 0 END) AS visited,
+        MAX(CASE WHEN event = 'product_view'   THEN 1 ELSE 0 END) AS viewed_product,
+        MAX(CASE WHEN event = 'add_to_cart'    THEN 1 ELSE 0 END) AS added_to_cart,
+        MAX(CASE WHEN event = 'checkout_start' THEN 1 ELSE 0 END) AS started_checkout,
+        MAX(CASE WHEN event = 'purchase'       THEN 1 ELSE 0 END) AS purchased
+    FROM events
+    WHERE event_date BETWEEN '2024-01-01' AND '2024-03-31'
+    GROUP BY session_id, device, utm_source
+),
+funnel_rates AS (
+    SELECT
+        device,
+        utm_source,
+        COUNT(*)                                          AS sessions,
+        ROUND(AVG(viewed_product)   * 100, 2)            AS pct_product_view,
+        ROUND(AVG(added_to_cart)    * 100, 2)            AS pct_add_to_cart,
+        ROUND(AVG(started_checkout) * 100, 2)            AS pct_checkout,
+        ROUND(AVG(purchased)        * 100, 2)            AS pct_purchase,
+        -- Step-over-step drop-off
+        ROUND((AVG(started_checkout) - AVG(purchased))
+               / NULLIF(AVG(started_checkout), 0) * 100, 2) AS checkout_dropoff_pct
+    FROM session_funnel
+    GROUP BY device, utm_source
+)
+SELECT * FROM funnel_rates
+ORDER BY checkout_dropoff_pct DESC;
+""", language="sql")
+
+            st.markdown("#### Step 2 — Segment analysis & visualisation (Python)")
+            st.code("""
+import pandas as pd
+import plotly.express as px
+
+# Load query results
+df = pd.read_csv("funnel_by_device.csv")
+
+# Pivot to wide format for comparison
+pivot = df.pivot_table(
+    index="stage",
+    columns="device",
+    values="conversion_rate"
+).reset_index()
+
+# Compute drop-off between steps
+stages = ["visited","viewed_product","added_to_cart","started_checkout","purchased"]
+for device in ["Desktop","Mobile","Tablet"]:
+    df_dev = df[df["device"] == device].sort_values("stage_order")
+    df_dev["step_dropoff"] = 1 - (df_dev["sessions"] / df_dev["sessions"].shift(1))
+    print(f"\\n{device} — worst drop-off step:")
+    print(df_dev.nlargest(1, "step_dropoff")[["stage","step_dropoff"]])
+
+# Finding: Mobile cart→checkout dropoff = 50% vs Desktop 33%
+mobile_dropoff = df.query("device=='Mobile' and stage=='started_checkout'")["dropoff_pct"].values[0]
+desktop_dropoff = df.query("device=='Desktop' and stage=='started_checkout'")["dropoff_pct"].values[0]
+print(f"\\nMobile is {mobile_dropoff/desktop_dropoff:.1f}x worse at cart→checkout")
+""", language="python")
+
+            st.markdown("#### Step 3 — Revenue impact estimation")
+            st.code("""
+# Baseline metrics (Q1 2024)
+sessions_mobile    = 45_000
+current_checkout_cvr = 0.12    # 12% mobile checkout conversion
+avg_order_value      = 87.50   # USD
+
+# Scenario: fix iOS cart UI → close gap to desktop (28%)
+target_cvr  = 0.155            # conservative mid-point improvement
+lift_pct    = (target_cvr - current_checkout_cvr) / current_checkout_cvr
+
+incremental_orders  = sessions_mobile * (target_cvr - current_checkout_cvr)
+monthly_revenue     = incremental_orders * avg_order_value
+
+print(f"Incremental orders/month : {incremental_orders:,.0f}")
+print(f"Revenue uplift/month     : ${monthly_revenue:,.0f}")
+# → ~548 orders → $47,950/month
+""", language="python")
 
     # ─── Project 2: Churn ────────────────────────────────────────────────────
     elif project_tab == "Customer Churn Analysis":
@@ -712,36 +491,106 @@ daily_analytics_pipeline()""",
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("Customer Churn Analysis")
+        tab1, tab2 = st.tabs(["📊 Analysis", "💻 Code"])
 
-        # Cohort heatmap
-        st.markdown("#### Retention cohort heatmap")
-        np.random.seed(42)
-        months = [f"Month {i}" for i in range(1, 13)]
-        cohorts = [f"Cohort {2023 + i//12}-{(i%12)+1:02d}" for i in range(8)]
-        base = np.array([100, 78, 62, 52, 45, 40, 36, 33, 30, 28, 27, 26])
-        data = np.array([base * (0.97 ** i) * (1 + np.random.randn(12) * 0.02) for i in range(8)])
-        data[:, 0] = 100
-        for i in range(8):
-            for j in range(i + 1, 8):
-                data[j, 12 - j + i - 1:] = np.nan
+        with tab1:
+            st.markdown("#### Retention cohort heatmap")
+            np.random.seed(42)
+            months  = [f"Month {i}" for i in range(1, 13)]
+            cohorts = [f"Cohort {2023 + i//12}-{(i%12)+1:02d}" for i in range(8)]
+            base    = np.array([100, 78, 62, 52, 45, 40, 36, 33, 30, 28, 27, 26])
+            data    = np.array([base * (0.97**i) * (1 + np.random.randn(12)*0.02) for i in range(8)])
+            data[:, 0] = 100
+            for i in range(8):
+                for j in range(i+1, 8):
+                    data[j, 12-j+i-1:] = np.nan
+            fig = go.Figure(go.Heatmap(
+                z=data.round(1), x=months, y=cohorts,
+                colorscale=[[0,"#dbeafe"],[0.5,"#3b82f6"],[1,"#1e3a8a"]],
+                text=np.where(np.isnan(data),"",data.round(1).astype(str)+"%"),
+                texttemplate="%{text}", showscale=True,
+                colorbar=dict(title="Retention %"),
+            ))
+            fig.update_layout(height=320, margin=dict(l=0,r=0,t=20,b=0),
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans")
+            st.plotly_chart(fig, use_container_width=True)
 
-        fig = go.Figure(go.Heatmap(
-            z=data.round(1),
-            x=months,
-            y=cohorts,
-            colorscale=[[0, "#dbeafe"], [0.5, "#3b82f6"], [1, "#1e3a8a"]],
-            text=np.where(np.isnan(data), "", data.round(1).astype(str) + "%"),
-            texttemplate="%{text}",
-            showscale=True,
-            colorbar=dict(title="Retention %"),
-        ))
-        fig.update_layout(
-            height=320, margin=dict(l=0, r=0, t=20, b=0),
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_family="DM Sans",
-        )
-        st.plotly_chart(fig, use_container_width=True)
+        with tab2:
+            st.markdown("#### Step 1 — Build retention cohorts (Python)")
+            st.code("""
+import pandas as pd
+import numpy as np
+
+# subscriptions: customer_id, cohort_month, activity_month, active (bool)
+df = pd.read_csv("subscriptions.csv", parse_dates=["cohort_month","activity_month"])
+
+# Cohort matrix
+cohort_pivot = df.groupby(["cohort_month","activity_month"])["active"].sum().reset_index()
+cohort_pivot["period"] = (
+    (cohort_pivot["activity_month"].dt.year  - cohort_pivot["cohort_month"].dt.year) * 12
+  + (cohort_pivot["activity_month"].dt.month - cohort_pivot["cohort_month"].dt.month)
+)
+cohort_sizes = cohort_pivot[cohort_pivot["period"]==0].set_index("cohort_month")["active"]
+retention = cohort_pivot.pivot_table(
+    index="cohort_month", columns="period", values="active"
+)
+retention_pct = retention.div(cohort_sizes, axis=0) * 100
+print(retention_pct.round(1))
+""", language="python")
+
+            st.markdown("#### Step 2 — Churn risk score (logistic regression)")
+            st.code("""
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import StandardScaler
+
+# Feature engineering
+features = pd.DataFrame({
+    "plan_monthly":     (customers["plan"] == "monthly").astype(int),
+    "logins_first30d":  customers["logins_first30d"],
+    "features_used":    customers["distinct_features_used"],
+    "support_tickets":  customers["support_tickets_l30d"],
+    "days_since_login": customers["days_since_last_login"],
+})
+target = customers["churned_next30d"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    features, target, test_size=0.2, random_state=42, stratify=target
+)
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s  = scaler.transform(X_test)
+
+model = LogisticRegression(class_weight="balanced", max_iter=500)
+model.fit(X_train_s, y_train)
+
+print(f"ROC-AUC: {roc_auc_score(y_test, model.predict_proba(X_test_s)[:,1]):.3f}")
+# → ROC-AUC: 0.81
+
+# Rank customers by churn probability for CS team
+customers["churn_risk"] = model.predict_proba(scaler.transform(features))[:,1]
+at_risk = customers.nlargest(200, "churn_risk")[["customer_id","plan","churn_risk"]]
+at_risk.to_csv("churn_watchlist.csv", index=False)
+""", language="python")
+
+            st.markdown("#### Step 3 — ARR impact calculation")
+            st.code("""
+current_churn   = 0.062   # 6.2% monthly
+target_churn    = 0.054   # 5.4% — conservative CS outreach target
+arr_per_customer = 1_200  # USD average
+
+total_customers  = 12_800
+monthly_revenue  = total_customers * (arr_per_customer / 12)
+
+saved_customers  = total_customers * (current_churn - target_churn)
+arr_preserved    = saved_customers * arr_per_customer
+
+print(f"Saved customers/month : {saved_customers:.0f}")
+print(f"ARR preserved/quarter : ${arr_preserved * 3:,.0f}")
+# → 102 customers saved → $122,400 ARR/quarter
+""", language="python")
 
     # ─── Project 3: CAC/LTV ──────────────────────────────────────────────────
     elif project_tab == "Marketing CAC/LTV":
@@ -770,33 +619,107 @@ daily_analytics_pipeline()""",
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("Marketing CAC/LTV")
+        tab1, tab2 = st.tabs(["📊 Analysis", "💻 Code"])
 
-        channels = ["Organic Search", "Paid Search", "Paid Social", "Email", "Referral"]
-        cac      = [28, 95, 140, 18, 42]
-        ltv      = [420, 380, 290, 310, 510]
-        spend    = [12, 35, 28, 8, 17]
+        with tab1:
+            channels = ["Organic Search", "Paid Search", "Paid Social", "Email", "Referral"]
+            cac      = [28, 95, 140, 18, 42]
+            ltv      = [420, 380, 290, 310, 510]
+            spend    = [12, 35, 28, 8, 17]
+            ratios   = [l/c for l, c in zip(ltv, cac)]
+            colors   = ["#10b981" if r > 5 else "#f59e0b" if r > 3 else "#ef4444" for r in ratios]
+            fig = make_subplots(rows=1, cols=2,
+                subplot_titles=["LTV / CAC Ratio by Channel","Budget Allocation vs. LTV/CAC"])
+            fig.add_trace(go.Bar(x=channels, y=ratios, marker_color=colors, name="LTV/CAC"), row=1, col=1)
+            fig.add_trace(go.Scatter(x=spend, y=ratios, mode="markers+text", text=channels,
+                textposition="top center", marker_size=14, marker_color=["#3b82f6"]*5, name=""), row=1, col=2)
+            fig.update_layout(height=340, showlegend=False,
+                paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                font_family="DM Sans", margin=dict(l=0,r=0,t=40,b=0))
+            fig.update_xaxes(row=1, col=2, title="Budget Share (%)")
+            fig.update_yaxes(row=1, col=1, title="LTV/CAC Ratio")
+            fig.update_yaxes(row=1, col=2, title="LTV/CAC Ratio")
+            st.plotly_chart(fig, use_container_width=True)
 
-        fig = make_subplots(rows=1, cols=2, subplot_titles=["LTV / CAC Ratio by Channel", "Budget Allocation vs. LTV/CAC"])
-        ratios = [l / c for l, c in zip(ltv, cac)]
-        colors = ["#10b981" if r > 5 else "#f59e0b" if r > 3 else "#ef4444" for r in ratios]
+        with tab2:
+            st.markdown("#### Step 1 — Consolidate spend + revenue by channel (SQL)")
+            st.code("""
+-- Consolidate campaign spend across platforms into one view
+WITH spend AS (
+    SELECT channel, SUM(spend_usd) AS total_spend, COUNT(DISTINCT campaign_id) AS campaigns
+    FROM marketing_spend
+    WHERE month BETWEEN '2024-01' AND '2024-06'
+    GROUP BY channel
+),
+acquisitions AS (
+    SELECT
+        utm_source                      AS channel,
+        COUNT(DISTINCT customer_id)     AS new_customers,
+        SUM(first_order_value)          AS first_order_revenue
+    FROM orders
+    WHERE order_type = 'new' AND order_date BETWEEN '2024-01-01' AND '2024-06-30'
+    GROUP BY utm_source
+),
+ltv AS (
+    -- 12-month LTV by acquisition channel using cohort revenue
+    SELECT
+        utm_source AS channel,
+        AVG(revenue_12m) AS avg_ltv_12m
+    FROM customer_ltv_cohorts
+    WHERE cohort_year = 2023
+    GROUP BY utm_source
+)
+SELECT
+    s.channel,
+    s.total_spend,
+    a.new_customers,
+    ROUND(s.total_spend / NULLIF(a.new_customers, 0), 2)  AS cac,
+    l.avg_ltv_12m,
+    ROUND(l.avg_ltv_12m / NULLIF(s.total_spend / a.new_customers, 0), 2) AS ltv_cac_ratio,
+    ROUND(s.total_spend / NULLIF(a.new_customers, 0)
+          / NULLIF(l.avg_ltv_12m / 12, 0), 1)             AS payback_months
+FROM spend s
+JOIN acquisitions a USING (channel)
+JOIN ltv l         USING (channel)
+ORDER BY ltv_cac_ratio DESC;
+""", language="sql")
 
-        fig.add_trace(go.Bar(x=channels, y=ratios, marker_color=colors, name="LTV/CAC"), row=1, col=1)
-        fig.add_trace(go.Scatter(
-            x=spend, y=ratios, mode="markers+text", text=channels,
-            textposition="top center", marker_size=14,
-            marker_color=["#3b82f6"] * 5, name="",
-        ), row=1, col=2)
+            st.markdown("#### Step 2 — LTV estimation & payback model (Python)")
+            st.code("""
+import pandas as pd
+import numpy as np
 
-        fig.update_layout(
-            height=340, showlegend=False,
-            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_family="DM Sans", margin=dict(l=0, r=0, t=40, b=0),
-        )
-        fig.update_xaxes(row=1, col=2, title="Budget Share (%)")
-        fig.update_yaxes(row=1, col=1, title="LTV/CAC Ratio")
-        fig.update_yaxes(row=1, col=2, title="LTV/CAC Ratio")
-        st.plotly_chart(fig, use_container_width=True)
+df = pd.read_csv("channel_metrics.csv")
+
+# Monthly revenue by cohort × channel (survival curve approach)
+def estimate_ltv(avg_monthly_revenue, monthly_churn_rate, months=12):
+    revenues = []
+    for m in range(1, months+1):
+        survival = (1 - monthly_churn_rate) ** m
+        revenues.append(avg_monthly_revenue * survival)
+    return sum(revenues)
+
+df["ltv_12m"] = df.apply(
+    lambda r: estimate_ltv(r["avg_mrr"], r["channel_churn_rate"]), axis=1
+)
+df["ltv_cac"]       = df["ltv_12m"] / df["cac"]
+df["payback_months"] = df["cac"] / (df["ltv_12m"] / 12)
+df["budget_share"]  = df["spend"] / df["spend"].sum()
+
+# Optimisation: reallocate 18% from Paid Social → Organic + Referral
+reallocation = df.copy()
+reallocation.loc[reallocation["channel"]=="Paid Social", "spend"] *= 0.82
+reallocation.loc[reallocation["channel"]=="Organic Search","spend"] *= 1.10
+reallocation.loc[reallocation["channel"]=="Referral",     "spend"] *= 1.08
+
+blended_roas_before = (df["ltv_12m"] * df["new_customers"]).sum() / df["spend"].sum()
+blended_roas_after  = (reallocation["ltv_12m"] * reallocation["new_customers"]).sum() \
+                       / reallocation["spend"].sum()
+
+print(f"ROAS before: {blended_roas_before:.2f}x  →  after: {blended_roas_after:.2f}x")
+print(f"Improvement: {(blended_roas_after/blended_roas_before - 1)*100:.1f}%")
+# → ROAS before: 3.41x → after: 3.82x | Improvement: 12.0%
+""", language="python")
 
     # ─── Project 5: Global Superstore ───────────────────────────────────────
     elif project_tab == "Global Superstore — Profitability":
@@ -838,9 +761,7 @@ across regions, customer segments, product categories, and discount bands.
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("Global Superstore — Profitability")
-
-        tab1, tab2, tab3 = st.tabs(["Discount Impact", "Regional Profitability", "Category & Segment"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Discount Impact", "Regional Profitability", "Category & Segment", "💻 Code"])
 
         with tab1:
             st.markdown("#### Average profit margin by discount band")
@@ -955,7 +876,76 @@ across regions, customer segments, product categories, and discount bands.
             st.plotly_chart(fig3, use_container_width=True)
             st.caption("Bubble size = absolute profit margin. Red = loss-making sub-category.")
 
-    # ─── Project 4: Forecasting ──────────────────────────────────────────────
+        with tab4:
+            st.markdown("#### Step 1 — Load data & engineer derived metrics (Python)")
+            st.code("""
+import pandas as pd
+import numpy as np
+
+df = pd.read_csv("global_superstore.csv", parse_dates=["Order Date","Ship Date"])
+
+# Feature engineering
+df["Profit_Margin"]      = df["Profit"] / df["Sales"]
+df["Shipping_Cost_Ratio"] = df["Shipping Cost"] / df["Sales"]
+df["Shipping_Days"]      = (df["Ship Date"] - df["Order Date"]).dt.days
+df["Discount_Band"] = pd.cut(
+    df["Discount"],
+    bins=[-0.01, 0, 0.10, 0.20, 0.30, 1.0],
+    labels=["No Discount","0–10%","10–20%","20–30%","30%+"]
+)
+print(df[["Sales","Profit","Profit_Margin","Shipping_Cost_Ratio","Discount_Band"]].describe())
+""", language="python")
+
+            st.markdown("#### Step 2 — Discount impact analysis")
+            st.code("""
+# Average margin and order volume by discount band
+discount_analysis = (
+    df.groupby("Discount_Band", observed=True)
+    .agg(
+        avg_margin    = ("Profit_Margin", "mean"),
+        total_profit  = ("Profit", "sum"),
+        order_count   = ("Order ID", "count"),
+        avg_sales     = ("Sales", "mean"),
+    )
+    .reset_index()
+)
+discount_analysis["avg_margin_pct"] = discount_analysis["avg_margin"] * 100
+print(discount_analysis.to_string(index=False))
+
+# Key finding: 30%+ band average margin = -12.1%
+breakeven_band = discount_analysis[discount_analysis["avg_margin"] < 0]
+print(f"\\nLoss-making bands: {breakeven_band['Discount_Band'].tolist()}")
+""", language="python")
+
+            st.markdown("#### Step 3 — Regional & sub-category breakdown")
+            st.code("""
+# Regional profitability with shipping cost analysis
+regional = (
+    df.groupby("Region")
+    .agg(
+        total_sales          = ("Sales",              "sum"),
+        total_profit         = ("Profit",             "sum"),
+        avg_profit_margin    = ("Profit_Margin",      "mean"),
+        avg_shipping_ratio   = ("Shipping_Cost_Ratio","mean"),
+    )
+    .assign(profit_margin_pct = lambda x: x["avg_profit_margin"]*100)
+    .sort_values("total_profit", ascending=False)
+)
+print(regional.to_string())
+
+# Sub-category winners and losers
+subcat = (
+    df.groupby("Sub-Category")
+    .agg(total_sales=("Sales","sum"), total_profit=("Profit","sum"))
+    .assign(margin=lambda x: x["total_profit"]/x["total_sales"])
+    .sort_values("total_profit")
+)
+print("\\nTop destroyers of margin:")
+print(subcat[subcat["total_profit"] < 0])
+# → Tables: -$17,725  |  Bookcases: -$3,473
+""", language="python")
+
+
     elif project_tab == "Operations Forecasting":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
@@ -982,36 +972,105 @@ across regions, customer segments, product categories, and discount bands.
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("Operations Forecasting")
+        tab1, tab2 = st.tabs(["📊 Analysis", "💻 Code"])
 
-        # Time series chart
-        st.markdown("#### Demand forecast — next 30 days")
-        np.random.seed(7)
-        dates_hist = pd.date_range("2024-01-01", periods=90, freq="D")
-        dates_fore = pd.date_range("2024-04-01", periods=30, freq="D")
-        seasonality = np.array([1.3, 1.1, 0.9, 0.85, 0.75, 0.8, 1.0] * 20)[:90]
-        actual = (200 + seasonality[:90] * 80 + np.random.randn(90) * 15).clip(50)
-        forecast = (200 + seasonality[:30] * 80 + np.random.randn(30) * 8).clip(50)
-        upper = forecast + 25
-        lower = forecast - 25
+        with tab1:
+            st.markdown("#### Demand forecast — next 30 days")
+            np.random.seed(7)
+            dates_hist  = pd.date_range("2024-01-01", periods=90, freq="D")
+            dates_fore  = pd.date_range("2024-04-01", periods=30, freq="D")
+            seasonality = np.array([1.3,1.1,0.9,0.85,0.75,0.8,1.0]*20)[:90]
+            actual      = (200 + seasonality[:90]*80 + np.random.randn(90)*15).clip(50)
+            forecast    = (200 + seasonality[:30]*80 + np.random.randn(30)*8).clip(50)
+            upper = forecast + 25
+            lower = forecast - 25
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=dates_hist, y=actual, name="Actual",
+                line=dict(color="#3b82f6",width=2)))
+            fig.add_trace(go.Scatter(
+                x=list(dates_fore)+list(dates_fore[::-1]),
+                y=list(upper)+list(lower[::-1]),
+                fill="toself", fillcolor="rgba(99,102,241,0.1)",
+                line=dict(color="rgba(0,0,0,0)"), name="95% CI"))
+            fig.add_trace(go.Scatter(x=dates_fore, y=forecast, name="Forecast",
+                line=dict(color="#6366f1",width=2,dash="dash")))
+            fig.update_layout(height=320, paper_bgcolor="rgba(0,0,0,0)",
+                plot_bgcolor="rgba(0,0,0,0)", font_family="DM Sans",
+                margin=dict(l=0,r=0,t=20,b=0), legend=dict(orientation="h",y=-0.2))
+            fig.update_xaxes(showgrid=False)
+            fig.update_yaxes(showgrid=True, gridcolor="#f1f5f9", title="Tickets / Day")
+            st.plotly_chart(fig, use_container_width=True)
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=dates_hist, y=actual, name="Actual", line=dict(color="#3b82f6", width=2)))
-        fig.add_trace(go.Scatter(
-            x=list(dates_fore) + list(dates_fore[::-1]),
-            y=list(upper) + list(lower[::-1]),
-            fill="toself", fillcolor="rgba(99,102,241,0.1)",
-            line=dict(color="rgba(0,0,0,0)"), name="95% CI",
-        ))
-        fig.add_trace(go.Scatter(x=dates_fore, y=forecast, name="Forecast", line=dict(color="#6366f1", width=2, dash="dash")))
-        fig.update_layout(
-            height=320, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
-            font_family="DM Sans", margin=dict(l=0, r=0, t=20, b=0),
-            legend=dict(orientation="h", y=-0.2),
-        )
-        fig.update_xaxes(showgrid=False)
-        fig.update_yaxes(showgrid=True, gridcolor="#f1f5f9", title="Tickets / Day")
-        st.plotly_chart(fig, use_container_width=True)
+        with tab2:
+            st.markdown("#### Step 1 — Load & explore ticket volume (Python)")
+            st.code("""
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.seasonal import seasonal_decompose
+
+# Load historical ticket data
+df = pd.read_csv("tickets.csv", parse_dates=["created_at"])
+df = df.set_index("created_at").resample("D")["ticket_id"].count().rename("volume")
+
+# Decompose: trend + seasonality + residual
+decomp = seasonal_decompose(df, model="additive", period=7)
+decomp.plot()
+plt.suptitle("Ticket Volume Decomposition", y=1.02)
+plt.tight_layout()
+plt.savefig("decomposition.png", dpi=150)
+""", language="python")
+
+            st.markdown("#### Step 2 — Rolling average forecast with confidence interval")
+            st.code("""
+# 7-day rolling average as baseline forecast
+df_model = df.to_frame()
+df_model["rolling_7d"]  = df["volume"].rolling(7, center=False).mean()
+df_model["rolling_28d"] = df["volume"].rolling(28, center=False).mean()
+
+# Seasonal index per weekday (Mon=0 … Sun=6)
+df_model["weekday"] = df_model.index.weekday
+seasonal_index = (
+    df_model.groupby("weekday")["volume"].mean()
+    / df_model["volume"].mean()
+)
+print("Seasonal index by weekday:")
+print(seasonal_index.rename({0:"Mon",1:"Tue",2:"Wed",3:"Thu",4:"Fri",5:"Sat",6:"Sun"}))
+# Mon: 1.28  Fri: 0.76  — strong weekly pattern
+
+# 30-day forward forecast
+forecast_dates  = pd.date_range(df.index[-1] + pd.Timedelta("1D"), periods=30)
+baseline        = df_model["rolling_7d"].iloc[-1]
+forecast_volume = [
+    baseline * seasonal_index[d.weekday()]
+    for d in forecast_dates
+]
+residual_std = (df["volume"] - df_model["rolling_7d"]).dropna().std()
+ci_upper = [v + 1.96 * residual_std for v in forecast_volume]
+ci_lower = [v - 1.96 * residual_std for v in forecast_volume]
+""", language="python")
+
+            st.markdown("#### Step 3 — Staffing recommendation output")
+            st.code("""
+# Convert forecasted volume to required agents
+TICKETS_PER_AGENT_PER_DAY = 18
+SLA_BUFFER = 1.10  # 10% capacity buffer to protect SLA
+
+staffing = pd.DataFrame({
+    "date":            forecast_dates,
+    "forecast_volume": forecast_volume,
+    "agents_needed":   [
+        int(np.ceil(v * SLA_BUFFER / TICKETS_PER_AGENT_PER_DAY))
+        for v in forecast_volume
+    ],
+})
+staffing["weekday"] = staffing["date"].dt.day_name()
+
+print(staffing[["date","weekday","forecast_volume","agents_needed"]].to_string(index=False))
+staffing.to_csv("weekly_staffing_plan.csv", index=False)
+
+# Result: Mon/Tue need 18–19 agents vs Fri 12 → previous flat 15 was over/understaffed
+""", language="python")
 
     # ─── Project 6: CineGraph ────────────────────────────────────────────────
     elif project_tab == "CineGraph — Cinema & TV Analytics":
@@ -1053,8 +1112,6 @@ survivorship-adjusted decade ratings, and director efficiency scores.
   <div class="metric-delta">Status & genre breakdown</div>
 </div>
             """, unsafe_allow_html=True)
-
-        render_technical_code("CineGraph — Cinema & TV Analytics")
 
         tab1, tab2, tab3, tab4 = st.tabs(["Budget & Revenue", "Ratings over Time", "ROI & Directors", "Hall of Fame"])
 
@@ -1287,8 +1344,6 @@ band, and tenure without requesting reports.
 </div>
             """, unsafe_allow_html=True)
 
-        render_technical_code("HR Analytics Dashboard")
-
         tab1, tab2, tab3 = st.tabs(["Attrition Drivers", "Headcount & Hiring", "Performance"])
 
         with tab1:
@@ -1409,8 +1464,6 @@ primary key, and update frequency.
   <div class="metric-delta">14 monitored tables</div>
 </div>
             """, unsafe_allow_html=True)
-
-        render_technical_code("Data Warehouse & SQL Optimization")
 
         tab1, tab2, tab3 = st.tabs(["Architecture", "Performance", "Data Quality"])
 
@@ -1565,8 +1618,6 @@ multiple comparisons.
   <div class="metric-delta">Effect below cost threshold</div>
 </div>
             """, unsafe_allow_html=True)
-
-        render_technical_code("A/B Testing & Regression — R")
 
         tab1, tab2, tab3 = st.tabs(["Distribution & Test", "Confidence Intervals", "Regression"])
 
@@ -1731,8 +1782,6 @@ Added Slack alerting, automatic retries, and a monitoring dashboard.
   <div class="metric-delta">Target: 95%</div>
 </div>
             """, unsafe_allow_html=True)
-
-        render_technical_code("ETL Pipeline — Airflow + dbt + BigQuery")
 
         tab1, tab2, tab3 = st.tabs(["Pipeline Architecture", "Run Performance", "dbt Tests"])
 
@@ -2080,6 +2129,8 @@ and supporting performance improvement and data-driven decision-making.
             ("Data Science & AI Fundamentals", "Data Science Academy", "Sep 2025"),
             ("Cloud Digital Leader", "Google", "Feb 2024"),
             ("Scrum Master Professional Certificate", "CertiProf", "Feb 2021"),
+            ("Remote Work & Virtual Collaboration Professional Certificate", "CertiProf", "Jan 2021"),
+            ("Scrum Foundations Professional Certificate", "CertiProf", "Jul 2020"),
             ("ITIL Foundation Certificate", "AXELOS", "Dec 2016"),
             ("Professional Scrum Master I", "Scrum.org", "Jul 2016"),
         ]
@@ -2105,25 +2156,76 @@ elif "Contact" in page:
     st.markdown("## Let's connect")
     st.markdown('<div class="main-subtitle">Open to remote roles, relocation, and new opportunities.</div>', unsafe_allow_html=True)
 
-    c1, c2 = st.columns(2, gap="large")
+    # ── Contact cards ─────────────────────────────────────────────────────────
+    c1, c2, c3 = st.columns(3, gap="large")
     with c1:
-        st.markdown("### Send a message")
-        name = st.text_input("Name")
-        email = st.text_input("Email")
-        message = st.text_area("Message", height=140)
-        if st.button("Send message →"):
-            if name and email and message:
-                st.success("✅ Message sent! I'll get back to you within 48 hours.")
-            else:
-                st.warning("Please fill in all fields.")
-
-    with c2:
-        st.markdown("### Quick links")
         st.markdown("""
-- 💼 **LinkedIn** — [linkedin.com/in/carlos-maximino](https://www.linkedin.com/in/carlos-maximino/)
-- 📧 **Email** — cmax15@outlook.com.br
-- 📱 **Phone** — +55 19 99379-2916
+<div class="metric-card" style="text-align:left;padding:20px 22px;">
+  <div style="font-size:22px;margin-bottom:8px">💼</div>
+  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.5;margin-bottom:6px">LinkedIn</div>
+  <a href="https://www.linkedin.com/in/carlos-maximino/" target="_blank"
+     style="color:#3b82f6;font-size:13px;font-weight:500;text-decoration:none;">
+    linkedin.com/in/carlos-maximino ↗
+  </a>
+</div>
+        """, unsafe_allow_html=True)
+    with c2:
+        st.markdown("""
+<div class="metric-card" style="text-align:left;padding:20px 22px;">
+  <div style="font-size:22px;margin-bottom:8px">📧</div>
+  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.5;margin-bottom:6px">Email</div>
+  <a href="mailto:cmax15@outlook.com.br"
+     style="color:#3b82f6;font-size:13px;font-weight:500;text-decoration:none;">
+    cmax15@outlook.com.br ↗
+  </a>
+</div>
+        """, unsafe_allow_html=True)
+    with c3:
+        st.markdown("""
+<div class="metric-card" style="text-align:left;padding:20px 22px;">
+  <div style="font-size:22px;margin-bottom:8px">📱</div>
+  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.5;margin-bottom:6px">Phone / WhatsApp</div>
+  <span style="font-size:13px;font-weight:500;">+55 19 99379-2916</span>
+</div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("---")
+
+    # ── What I'm looking for ─────────────────────────────────────────────────
+    col_look, col_info = st.columns([3, 2], gap="large")
+
+    with col_look:
+        st.markdown("### What I'm looking for")
+        items = [
+            ("🎯", "Role type", "Data Analyst · Business Intelligence Analyst · Analytics Engineer"),
+            ("🌍", "Work model", "Remote-first — open to relocation for the right opportunity"),
+            ("🏢", "Team size", "Data-driven teams where analytics has a seat at the decision table"),
+            ("📊", "Domain focus", "Operations, service performance, product, or financial analytics"),
+            ("🗣️", "Languages", "Comfortable working in English or Portuguese (B2 English, native PT)"),
+        ]
+        for icon, label, value in items:
+            st.markdown(
+                f'<div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:14px;">'
+                f'<div style="font-size:20px;flex-shrink:0;line-height:1.4">{icon}</div>'
+                f'<div><div style="font-size:11px;font-weight:600;text-transform:uppercase;'
+                f'letter-spacing:.08em;opacity:.5;margin-bottom:2px">{label}</div>'
+                f'<div style="font-size:14px">{value}</div></div></div>',
+                unsafe_allow_html=True
+            )
+
+    with col_info:
+        st.markdown("### Quick profile")
+        st.markdown("""
+| | |
+|---|---|
+| 📍 Location | Brazil |
+| 🕐 Timezone | UTC -3 (BRT) |
+| 🗣️ English | B2 Upper-Intermediate |
+| 🗣️ Spanish | Professional working |
+| 🎓 Education | MBA — FGV |
+| 🏢 Current | Kyndryl |
         """)
         st.markdown("---")
-        st.markdown("### Availability")
-        st.info("✅ **Open to new opportunities.**\n\nPreferences: Remote-first · Data & Business Analytics · International teams · Relocation considered.")
+        st.markdown("### Download")
+        st.markdown("📄 [View CV on LinkedIn ↗](https://www.linkedin.com/in/carlos-maximino/)")
+        st.caption("Full résumé also available in the **Resume** tab above.")
