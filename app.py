@@ -1084,19 +1084,21 @@ staffing.to_csv("weekly_staffing_plan.csv", index=False)
             """, unsafe_allow_html=True)
             st.markdown("### CineGraph — Cinema & TV Analytics Dashboard")
             st.markdown("""
-**Business problem:** The film industry generates enormous datasets, but most public tools lack a unified view
-linking financial performance, audience ratings, genre trends, and director output across decades.
+**Business problem:** Most cinema analytics tools answer only one question at a time — box office rankings,
+or ratings, or director filmographies — but none connect financial performance, audience reception,
+language distribution, and temporal trends in a single exploratory view.
 
-**Approach:** Built a fully custom analytical dashboard in pure **HTML + JavaScript (Chart.js)** using TMDB data.
-Covered 20,000+ films and 15,000+ TV series, engineering derived metrics like ROI, avg budget/revenue ratios,
-survivorship-adjusted decade ratings, and director efficiency scores.
+**Approach:** Built a standalone analytical dashboard in pure **HTML + JavaScript (Chart.js)**, processing
+the full TMDB dataset client-side with no backend. Engineered derived metrics not in the raw data:
+ROI per film (Revenue / Budget), survivorship-adjusted decade ratings, director efficiency scores
+(avg rating filtered to directors with 20+ films), and genre revenue multipliers.
 
 **Key findings:**
-- **Animation** leads in ROI (~3.7×) despite not having the highest budgets — driven by strong home media revenue.
-- Average ratings **decline across decades** (7.42 in the 1920s → 6.42 in the 2000s) — a classic survivorship bias effect; only great old films survive.
-- **Martin Scorsese** achieves the highest avg rating (★ 7.27) among directors with 25+ films — quality at scale.
-- Micro-budget films dominate extreme ROI: *Fist of Fury* at ~100,000% ROI, *One Cut of the Dead* at 52,547%.
-- **English** accounts for 73% of catalogued films; French (8%) is a distant second.
+- **Animation** leads ROI at 3.7× — not the highest budget genre, but the most efficient earner due to global appeal and home media.
+- Ratings **decline across decades** (7.42 in the 1920s → 6.42 in the 2000s): survivorship bias — only acclaimed older films remain in modern catalogues.
+- **Martin Scorsese** achieves the highest avg rating (★ 7.27) among prolific directors — quality maintained at scale.
+- Micro-budget outliers dominate extreme ROI: *Fist of Fury* ~100,000%, *One Cut of the Dead* 52,547% — median ROI is a more honest metric.
+- **English** accounts for 73% of catalogued films; French (8%) is the closest competitor.
             """)
         with col_impact:
             st.markdown('<div class="section-label">Dataset scope</div>', unsafe_allow_html=True)
@@ -1113,7 +1115,7 @@ survivorship-adjusted decade ratings, and director efficiency scores.
 </div>
             """, unsafe_allow_html=True)
 
-        tab1, tab2, tab3, tab4 = st.tabs(["Budget & Revenue", "Ratings over Time", "ROI & Directors", "Hall of Fame"])
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(["Budget & Revenue", "Ratings over Time", "ROI & Directors", "Hall of Fame", "💻 Code"])
 
         # ── Tab 1: Budget & Revenue ──────────────────────────────────────────
         with tab1:
@@ -1305,7 +1307,139 @@ survivorship-adjusted decade ratings, and director efficiency scores.
             st.plotly_chart(fig8, use_container_width=True)
             st.caption("Data source: TMDB (The Movie Database). Ratings reflect weighted audience scores at time of data collection.")
 
-    # ─── Project 7: Power BI — HR Analytics ─────────────────────────────────
+        with tab5:
+            st.markdown("#### Step 1 — Data loading & metric engineering (JavaScript)")
+            st.code("""
+// Fetch and process TMDB dataset (JSON loaded from local file)
+async function loadData() {
+  const [movies, series] = await Promise.all([
+    fetch('data/tmdb_movies.json').then(r => r.json()),
+    fetch('data/tmdb_series.json').then(r => r.json()),
+  ]);
+
+  // Engineer derived metrics
+  const enriched = movies.map(m => ({
+    ...m,
+    roi:            m.budget > 0 ? ((m.revenue - m.budget) / m.budget) * 100 : null,
+    profit_margin:  m.revenue > 0 ? (m.revenue - m.budget) / m.revenue : null,
+    revenue_mult:   m.budget > 0 ? m.revenue / m.budget : null,
+    decade:         Math.floor(m.release_year / 10) * 10,
+  })).filter(m => m.budget > 10_000 && m.revenue > 0); // remove zero-budget noise
+
+  return { movies: enriched, series };
+}
+""", language="javascript")
+
+            st.markdown("#### Step 2 — Genre aggregation & ROI multiplier")
+            st.code("""
+// Group by genre and compute financial averages
+function aggregateByGenre(movies) {
+  const byGenre = {};
+
+  movies.forEach(movie => {
+    movie.genres.forEach(genre => {
+      if (!byGenre[genre]) byGenre[genre] = { budgets: [], revenues: [], rois: [] };
+      byGenre[genre].budgets.push(movie.budget / 1e6);      // → millions
+      byGenre[genre].revenues.push(movie.revenue / 1e6);
+      if (movie.roi !== null) byGenre[genre].rois.push(movie.roi);
+    });
+  });
+
+  return Object.entries(byGenre).map(([genre, data]) => ({
+    genre,
+    avg_budget:  avg(data.budgets),
+    avg_revenue: avg(data.revenues),
+    revenue_mult: avg(data.revenues) / avg(data.budgets),
+    median_roi:  median(data.rois),   // median avoids extreme-ROI distortion
+  })).sort((a, b) => b.revenue_mult - a.revenue_mult);
+}
+
+const avg    = arr => arr.reduce((a,b) => a+b, 0) / arr.length;
+const median = arr => { const s = [...arr].sort((a,b)=>a-b); return s[Math.floor(s.length/2)]; };
+""", language="javascript")
+
+            st.markdown("#### Step 3 — Director efficiency score & decade rating")
+            st.code("""
+// Director efficiency: avg rating filtered to directors with 20+ films
+function directorLeaderboard(movies, minFilms = 20) {
+  const byDir = {};
+  movies.forEach(m => {
+    if (!m.director) return;
+    if (!byDir[m.director]) byDir[m.director] = [];
+    byDir[m.director].push(m.vote_average);
+  });
+
+  return Object.entries(byDir)
+    .filter(([_, ratings]) => ratings.length >= minFilms)
+    .map(([director, ratings]) => ({
+      director,
+      films:      ratings.length,
+      avg_rating: avg(ratings),
+    }))
+    .sort((a, b) => b.avg_rating - a.avg_rating);
+}
+
+// Decade rating — survivorship bias note added to tooltip
+function ratingByDecade(movies) {
+  const byDecade = {};
+  movies.forEach(m => {
+    const d = m.decade;
+    if (!byDecade[d]) byDecade[d] = [];
+    byDecade[d].push(m.vote_average);
+  });
+  return Object.entries(byDecade)
+    .map(([decade, ratings]) => ({
+      decade: `${decade}s`,
+      avg_rating: avg(ratings),
+      sample_size: ratings.length,
+      // Small sample = high survivorship bias → flag for chart tooltip
+      survivorship_flag: ratings.length < 200,
+    }))
+    .sort((a, b) => a.decade.localeCompare(b.decade));
+}
+""", language="javascript")
+
+            st.markdown("#### Step 4 — Chart.js render (example: Revenue Multiplier bar)")
+            st.code("""
+function renderRevenueMultiplierChart(genreData) {
+  const ctx = document.getElementById('revenueMultChart').getContext('2d');
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: genreData.map(g => g.genre),
+      datasets: [{
+        label: 'Revenue Multiplier (×)',
+        data: genreData.map(g => g.revenue_mult.toFixed(2)),
+        backgroundColor: genreData.map(g =>
+          g.revenue_mult > 3   ? 'rgba(16,185,129,0.8)'   // green — high ROI
+          : g.revenue_mult > 2 ? 'rgba(245,158,11,0.8)'   // amber
+                               : 'rgba(239,68,68,0.6)'    // red
+        ),
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        tooltip: { callbacks: {
+          label: ctx => `${ctx.parsed.y}× avg revenue per $1 spent`
+        }},
+        annotation: {
+          annotations: { breakeven: {
+            type: 'line', yMin: 1, yMax: 1,
+            borderColor: '#94a3b8', borderDash: [6,4],
+            label: { content: 'Break-even', display: true }
+          }}
+        }
+      },
+      scales: { y: { title: { display: true, text: 'Revenue / Budget' }}}
+    }
+  });
+}
+""", language="javascript")
+
+
     elif project_tab == "HR Analytics Dashboard":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
@@ -1344,7 +1478,7 @@ band, and tenure without requesting reports.
 </div>
             """, unsafe_allow_html=True)
 
-        tab1, tab2, tab3 = st.tabs(["Attrition Drivers", "Headcount & Hiring", "Performance"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Attrition Drivers", "Headcount & Hiring", "Performance", "💻 Code"])
 
         with tab1:
             col_a, col_b = st.columns(2)
@@ -1425,7 +1559,113 @@ band, and tenure without requesting reports.
             st.plotly_chart(fig4, use_container_width=True)
             st.info("📌 **Key insight:** High performers (Band 5) churn almost as fast as low performers — the U-shaped curve suggests top talent is being lost, likely due to lack of growth opportunities rather than performance management issues.")
 
-    # ─── Project 8: SQL — Data Warehouse Optimization ───────────────────────
+        with tab4:
+            st.markdown("#### Step 1 — Power Query M: data model preparation")
+            st.code("""
+// Power Query M — stg_employees transformation
+let
+    Source        = Csv.Document(File.Contents("employees.csv"), [Delimiter=",", Encoding=65001]),
+    PromoteHeaders = Table.PromoteHeaders(Source),
+    TypedColumns   = Table.TransformColumnTypes(PromoteHeaders, {
+        {"employee_id",    Int64.Type},
+        {"hire_date",      type date},
+        {"termination_date", type date},
+        {"department",     type text},
+        {"performance_band", Int64.Type},
+        {"salary",         type number}
+    }),
+    // Derived columns
+    AddTenureYears = Table.AddColumn(TypedColumns, "tenure_years",
+        each if [termination_date] = null
+             then Duration.TotalDays(Date.From(DateTime.LocalNow()) - [hire_date]) / 365
+             else Duration.TotalDays([termination_date] - [hire_date]) / 365,
+        type number),
+    AddTenureBucket = Table.AddColumn(AddTenureYears, "tenure_bucket",
+        each if [tenure_years] < 1  then "< 1 year"
+             else if [tenure_years] < 2  then "1–2 years"
+             else if [tenure_years] < 5  then "2–5 years"
+             else if [tenure_years] < 10 then "5–10 years"
+             else "10+ years",
+        type text),
+    AddIsActive = Table.AddColumn(AddTenureBucket, "is_active",
+        each [termination_date] = null, type logical)
+in
+    AddIsActive
+""", language="fsharp")
+
+            st.markdown("#### Step 2 — DAX measures (key KPIs)")
+            st.code("""
+-- ── Headcount & Attrition ──────────────────────────────────────
+Active Headcount =
+    CALCULATE(
+        COUNTROWS(dim_employees),
+        dim_employees[is_active] = TRUE()
+    )
+
+Attrition Rate =
+    DIVIDE(
+        CALCULATE(COUNTROWS(dim_employees), dim_employees[is_active] = FALSE()),
+        COUNTROWS(dim_employees),
+        0
+    )
+
+-- Department attrition vs company average (for conditional formatting)
+Attrition vs Avg =
+    VAR dept_rate    = [Attrition Rate]
+    VAR company_rate = CALCULATE([Attrition Rate], ALL(dim_employees[department]))
+    RETURN dept_rate - company_rate
+
+-- ── Performance ────────────────────────────────────────────────
+High Performer Attrition Rate =
+    CALCULATE(
+        [Attrition Rate],
+        dim_employees[performance_band] >= 4
+    )
+
+-- ── Tenure ─────────────────────────────────────────────────────
+Avg Tenure at Departure (Years) =
+    CALCULATE(
+        AVERAGE(dim_employees[tenure_years]),
+        dim_employees[is_active] = FALSE()
+    )
+
+Pct Departures Under 2Y =
+    DIVIDE(
+        CALCULATE(
+            COUNTROWS(dim_employees),
+            dim_employees[is_active]    = FALSE(),
+            dim_employees[tenure_years] < 2
+        ),
+        CALCULATE(COUNTROWS(dim_employees), dim_employees[is_active] = FALSE()),
+        0
+    )
+""", language="sql")
+
+            st.markdown("#### Step 3 — Star schema (data model)")
+            st.code("""
+-- Fact + dimension tables used in the Power BI model
+--
+--   dim_employees     (employee_id PK, department, performance_band,
+--                      hire_date, termination_date, tenure_bucket, salary)
+--       ↑ 1:many
+--   fact_monthly_headcount  (snapshot_month, employee_id FK,
+--                             is_active, is_new_hire, is_departure)
+--       ↑ many:1
+--   dim_calendar      (date PK, year, quarter, month, month_name, weekday)
+--   dim_department    (dept_id PK, dept_name, business_unit, manager_id)
+--
+-- Relationships:
+--   fact_monthly_headcount[employee_id]  → dim_employees[employee_id]
+--   fact_monthly_headcount[snapshot_month] → dim_calendar[date]
+--   dim_employees[department]            → dim_department[dept_name]
+--
+-- Key design choices:
+--   • Monthly snapshot pattern → supports point-in-time headcount queries
+--   • Performance band in dim_employees (SCD Type 1 — current value only)
+--   • Inactive filter default on slicers (is_active = TRUE)
+""", language="sql")
+
+
     elif project_tab == "Data Warehouse & SQL Optimization":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
@@ -1465,7 +1705,7 @@ primary key, and update frequency.
 </div>
             """, unsafe_allow_html=True)
 
-        tab1, tab2, tab3 = st.tabs(["Architecture", "Performance", "Data Quality"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Architecture", "Performance", "Data Quality", "💻 Code"])
 
         with tab1:
             st.markdown("#### Medallion architecture — 3 layers")
@@ -1578,7 +1818,140 @@ LEFT JOIN products  p USING (product_id)
                 yaxis=dict(title="Pass rate (%)", range=[0,115]))
             st.plotly_chart(fig3, use_container_width=True)
 
-    # ─── Project 9: R — A/B Testing & Statistical Analysis ──────────────────
+        with tab4:
+            st.markdown("#### Step 1 — Staging layer: clean & type raw sources")
+            st.code("""
+-- models/staging/stg_orders.sql
+-- Grain: one row per order line item
+-- Source: raw.orders (CSV load, no transformations)
+
+WITH source AS (
+    SELECT * FROM {{ source('raw', 'orders') }}
+),
+renamed AS (
+    SELECT
+        CAST(order_id       AS STRING)  AS order_id,
+        CAST(customer_id    AS STRING)  AS customer_id,
+        CAST(product_id     AS STRING)  AS product_id,
+        DATE(order_date)                AS order_date,
+        DATE(ship_date)                 AS ship_date,
+        LOWER(TRIM(ship_mode))          AS ship_mode,
+        LOWER(TRIM(segment))            AS segment,
+        LOWER(TRIM(region))             AS region,
+        CAST(quantity       AS INT64)   AS quantity,
+        ROUND(CAST(sales    AS FLOAT64), 2) AS sales,
+        ROUND(CAST(discount AS FLOAT64), 4) AS discount,
+        ROUND(CAST(profit   AS FLOAT64), 2) AS profit,
+        ROUND(CAST(shipping_cost AS FLOAT64), 2) AS shipping_cost,
+        -- Deduplication key
+        ROW_NUMBER() OVER (
+            PARTITION BY order_id, product_id
+            ORDER BY _loaded_at DESC
+        ) AS row_num
+    FROM source
+)
+SELECT * EXCEPT (row_num)
+FROM renamed
+WHERE row_num = 1   -- keep latest load only
+""", language="sql")
+
+            st.markdown("#### Step 2 — Intermediate layer: business logic & joins")
+            st.code("""
+-- models/intermediate/int_orders_enriched.sql
+-- Grain: one row per order line item, enriched with customer + product dims
+
+WITH orders AS (
+    SELECT * FROM {{ ref('stg_orders') }}
+),
+customers AS (
+    SELECT * FROM {{ ref('stg_customers') }}
+),
+products AS (
+    SELECT * FROM {{ ref('stg_products') }}
+)
+SELECT
+    o.order_id,
+    o.order_date,
+    DATE_TRUNC(o.order_date, MONTH)            AS order_month,
+    DATE_DIFF(o.ship_date, o.order_date, DAY)  AS shipping_days,
+    c.customer_id,
+    c.customer_name,
+    c.country,
+    c.region,
+    c.segment,
+    p.product_id,
+    p.category,
+    p.sub_category,
+    o.quantity,
+    o.sales,
+    o.discount,
+    o.profit,
+    o.shipping_cost,
+    -- Derived metrics
+    SAFE_DIVIDE(o.profit, o.sales)              AS profit_margin,
+    SAFE_DIVIDE(o.shipping_cost, o.sales)       AS shipping_cost_ratio,
+    CASE
+        WHEN o.discount = 0       THEN 'No Discount'
+        WHEN o.discount <= 0.10   THEN '0–10%'
+        WHEN o.discount <= 0.20   THEN '10–20%'
+        WHEN o.discount <= 0.30   THEN '20–30%'
+        ELSE '30%+'
+    END                                          AS discount_band
+FROM orders o
+LEFT JOIN customers c USING (customer_id)
+LEFT JOIN products  p USING (product_id)
+""", language="sql")
+
+            st.markdown("#### Step 3 — Mart layer: partitioned & clustered for BI")
+            st.code("""
+-- models/marts/mart_orders.sql
+-- Config: materialized table, partitioned by month, clustered by region + category
+-- Grain: one row per order line — flat, wide, BI-ready
+
+{{ config(
+    materialized  = 'table',
+    partition_by  = { 'field': 'order_month', 'data_type': 'date', 'granularity': 'month' },
+    cluster_by    = ['region', 'category', 'segment'],
+    labels        = { 'layer': 'mart', 'domain': 'orders' }
+) }}
+
+SELECT * FROM {{ ref('int_orders_enriched') }}
+""", language="sql")
+
+            st.markdown("#### Step 4 — dbt schema.yml: tests & documentation")
+            st.code("""
+# models/staging/stg_orders.yml
+version: 2
+
+models:
+  - name: stg_orders
+    description: >
+      Cleaned and typed order line items from the raw CSV source.
+      Deduplication applied via ROW_NUMBER on (order_id, product_id).
+    columns:
+      - name: order_id
+        description: Unique order identifier
+        tests: [not_null]
+
+      - name: customer_id
+        tests: [not_null, relationships: {to: ref('stg_customers'), field: customer_id}]
+
+      - name: discount
+        tests:
+          - not_null
+          - accepted_range: {min_value: 0, max_value: 1}
+
+      - name: profit_margin
+        tests:
+          - accepted_range: {min_value: -1, max_value: 1}
+
+      - name: ship_mode
+        tests:
+          - accepted_values:
+              values: ['first class','second class','standard class','same day']
+""", language="yaml")
+
+
     elif project_tab == "A/B Testing & Regression — R":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
@@ -1619,7 +1992,7 @@ multiple comparisons.
 </div>
             """, unsafe_allow_html=True)
 
-        tab1, tab2, tab3 = st.tabs(["Distribution & Test", "Confidence Intervals", "Regression"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Distribution & Test", "Confidence Intervals", "Regression", "💻 Code"])
 
         with tab1:
             st.markdown("#### Conversion rate distribution — Control vs Treatment")
@@ -1741,7 +2114,137 @@ t_result |>
             st.plotly_chart(fig3, use_container_width=True)
             st.caption("Error bars = 95% CI. Device type has 4× the impact of the UI variant — mobile optimisation is a higher-priority lever.")
 
-    # ─── Project 10: Data Engineering — Airflow + dbt + BigQuery ────────────
+        with tab4:
+            st.markdown("#### Step 1 — Pre-experiment: sample size & power calculation")
+            st.code("""
+library(tidyverse)
+library(broom)
+library(pwr)
+
+# ── Pre-register the test BEFORE launch ───────────────────────────────────
+# Primary metric : conversion rate (purchases / sessions)
+# MDE            : 1.0 p.p. lift (5.2% → 6.2%)  — minimum worth shipping
+# α              : 0.05 (two-sided)
+# Power (1-β)    : 0.80
+
+baseline_cvr <- 0.052
+mde          <- 0.011   # minimum detectable effect
+
+sample_size <- pwr.2p.test(
+  h           = ES.h(baseline_cvr + mde, baseline_cvr),
+  sig.level   = 0.05,
+  power       = 0.80,
+  alternative = "two.sided"
+)
+# Required n = 12,388 per group → rounded up to 12,400
+
+cat("Required n per group:", ceiling(sample_size$n), "\\n")
+cat("Estimated test duration at 900 sessions/day per variant:",
+    ceiling(sample_size$n / 900), "days\\n")
+# → 14 days minimum  (original team ran only 4 days — massively underpowered)
+""", language="r")
+
+            st.markdown("#### Step 2 — Load experiment data & run the t-test")
+            st.code("""
+# ── Load results ──────────────────────────────────────────────────────────
+df <- read_csv("experiment_results.csv") |>
+  mutate(converted = as.integer(converted))
+
+# Check group balance
+df |> count(variant)
+# control: 12,412  treatment: 12,389  ✓ balanced
+
+# ── Two-sample t-test ─────────────────────────────────────────────────────
+result <- t.test(
+  converted ~ variant,
+  data        = df,
+  alternative = "two.sided",
+  conf.level  = 0.95
+) |> tidy()
+
+result |>
+  select(estimate1, estimate2, statistic, p.value, conf.low, conf.high) |>
+  mutate(across(where(is.numeric), ~round(.x, 4)))
+#   estimate1 estimate2 statistic p.value conf.low conf.high
+#      0.0520    0.0630     2.376  0.0176   0.0019    0.0202
+
+# ── Cohen's h (effect size for proportions) ───────────────────────────────
+cohen_h <- ES.h(result$estimate2, result$estimate1)
+cat("Cohen's h:", round(cohen_h, 4), "\\n")
+# → 0.0314  — statistically significant but small effect
+
+# ── Bonferroni correction for 3 guardrail metrics ─────────────────────────
+alpha_corrected <- 0.05 / (1 + 3)   # primary + 3 guardrails
+cat("Corrected α:", alpha_corrected, "\\n")   # 0.0125
+cat("Result after correction:", ifelse(result$p.value < alpha_corrected,
+    "SIGNIFICANT", "NOT significant"), "\\n")
+# → p = 0.0176 > 0.0125 → NOT significant after correction
+""", language="r")
+
+            st.markdown("#### Step 3 — Logistic regression: identify true conversion drivers")
+            st.code("""
+library(broom)
+library(car)
+
+# ── Feature engineering ───────────────────────────────────────────────────
+df_model <- df |>
+  mutate(
+    device_mobile   = as.integer(device == "mobile"),
+    source_organic  = as.integer(utm_source == "organic"),
+    return_visitor  = as.integer(visit_count > 1),
+    evening_session = as.integer(hour(session_start) >= 18),
+    log_session_dur = log1p(session_duration_sec),
+  )
+
+# ── Fit logistic regression ───────────────────────────────────────────────
+model <- glm(
+  converted ~ variant + device_mobile + log_session_dur +
+              source_organic + return_visitor + evening_session,
+  data   = df_model,
+  family = binomial(link = "logit")
+)
+
+# Tidy output with confidence intervals
+tidy(model, conf.int = TRUE, exponentiate = TRUE) |>
+  arrange(desc(abs(estimate - 1))) |>
+  select(term, estimate, conf.low, conf.high, p.value)
+
+# Key output:
+# term             estimate  conf.low  conf.high  p.value
+# device_mobile      0.891     0.871      0.912   <0.001  ← strongest predictor
+# variant_treatment  1.031     1.004      1.059    0.024
+# return_visitor     1.074     1.051      1.097   <0.001
+# source_organic     1.068     1.038      1.099   <0.001
+
+# ── VIF check (multicollinearity) ─────────────────────────────────────────
+vif(model)   # all < 2 → no multicollinearity concern
+""", language="r")
+
+            st.markdown("#### Step 4 — Final recommendation")
+            st.code("""
+# ── Business impact calculation ───────────────────────────────────────────
+monthly_sessions <- 900 * 30          # 27,000/month per variant
+current_cvr      <- 0.052
+confirmed_lift   <- 0.011             # 1.1 p.p.
+aov              <- 87.50             # average order value USD
+
+incremental_orders  <- monthly_sessions * confirmed_lift
+incremental_revenue <- incremental_orders * aov
+engineering_cost    <- 40_000         # estimated dev + QA cost to ship
+
+payback_months <- engineering_cost / incremental_revenue
+
+cat(sprintf("Incremental revenue/month: $%.0f\\n", incremental_revenue))
+cat(sprintf("Engineering cost:          $%.0f\\n", engineering_cost))
+cat(sprintf("Payback period:            %.1f months\\n", payback_months))
+# → Revenue: $25,987/month | Payback: 1.5 months
+
+# Final recommendation: DO NOT SHIP this iteration
+# Reason: effect is real but device optimisation (mobile β = -0.12) offers
+# 4x more impact per engineering hour → prioritise mobile UX instead.
+""", language="r")
+
+
     elif project_tab == "ETL Pipeline — Airflow + dbt + BigQuery":
         col_desc, col_impact = st.columns([2, 1])
         with col_desc:
@@ -1783,7 +2286,7 @@ Added Slack alerting, automatic retries, and a monitoring dashboard.
 </div>
             """, unsafe_allow_html=True)
 
-        tab1, tab2, tab3 = st.tabs(["Pipeline Architecture", "Run Performance", "dbt Tests"])
+        tab1, tab2, tab3, tab4 = st.tabs(["Pipeline Architecture", "Run Performance", "dbt Tests", "💻 Code"])
 
         with tab1:
             st.markdown("#### DAG structure — daily pipeline")
@@ -1900,10 +2403,167 @@ def daily_analytics_pipeline():
             st.plotly_chart(fig2, use_container_width=True)
             st.caption("Business rule tests cover domain-specific checks: no negative revenue, discount ≤ 1.0, order_date ≤ ship_date, country codes in ISO whitelist.")
 
+        with tab4:
+            st.markdown("#### Step 1 — Airflow DAG: full orchestration definition")
+            st.code("""
+# dags/daily_analytics_pipeline.py
+from __future__ import annotations
+from airflow.decorators import dag, task
+from airflow.providers.google.cloud.transfers.gcs_to_bigquery import GCSToBigQueryOperator
+from airflow.providers.google.cloud.operators.bigquery import BigQueryCheckOperator
+from airflow.providers.dbt.cloud.operators.dbt import DbtCloudRunJobOperator
+from airflow.utils.trigger_rule import TriggerRule
+from pendulum import datetime
+import requests, os
 
-# ══════════════════════════════════════════════════════════════════════════════
-# PAGE: SKILLS
-# ══════════════════════════════════════════════════════════════════════════════
+def slack_alert(context):
+    # Send Slack message on task failure with DAG + task name.
+    msg = (f":red_circle: *Pipeline failure*\\n"
+           f"DAG: `{context['dag'].dag_id}`\\n"
+           f"Task: `{context['task_instance'].task_id}`\\n"
+           f"Run: `{context['execution_date']}`\\n"
+           f"Log: {context['task_instance'].log_url}")
+    requests.post(os.environ["SLACK_WEBHOOK_URL"], json={"text": msg})
+
+@dag(
+    dag_id        = "daily_analytics_pipeline",
+    schedule      = "0 5 * * *",            # 05:00 UTC every day
+    start_date    = datetime(2024, 1, 1),
+    catchup       = False,
+    retries       = 2,
+    retry_delay   = 300,                    # 5-min backoff
+    on_failure_callback = slack_alert,
+    tags          = ["analytics", "production"],
+)
+def pipeline():
+    # ── Extract: GCS → BigQuery raw layer ──────────────────────────
+    load_orders = GCSToBigQueryOperator(
+        task_id              = "load_raw_orders",
+        bucket               = "gs://analytics-raw",
+        source_objects       = ["orders/{{ ds_nodash }}/*.csv"],
+        destination_project_dataset_table = "project.raw.orders",
+        schema_fields        = None,        # auto-detect
+        write_disposition    = "WRITE_TRUNCATE",
+        create_disposition   = "CREATE_IF_NEEDED",
+    )
+    load_customers = GCSToBigQueryOperator(task_id="load_raw_customers", ...)
+    load_products  = GCSToBigQueryOperator(task_id="load_raw_products", ...)
+
+    # ── Quality gate: row count check before transforming ──────────
+    check_orders = BigQueryCheckOperator(
+        task_id = "check_orders_not_empty",
+        sql     = "SELECT COUNT(*) > 0 FROM `project.raw.orders` WHERE DATE(_partitiontime) = '{{ ds }}'",
+        use_legacy_sql = False,
+    )
+
+    # ── Transform: dbt run + test ───────────────────────────────────
+    dbt_run  = DbtCloudRunJobOperator(task_id="dbt_run",  job_id=12345, wait_for_termination=True)
+    dbt_test = DbtCloudRunJobOperator(task_id="dbt_test", job_id=12346, wait_for_termination=True)
+
+    # ── Load: refresh downstream caches ────────────────────────────
+    @task(trigger_rule=TriggerRule.ALL_SUCCESS)
+    def refresh_looker():
+        import google.auth, google.auth.transport.requests
+        creds, _ = google.auth.default(scopes=["https://www.googleapis.com/auth/cloud-platform"])
+        # Trigger Looker Studio dataset refresh via API
+        ...
+
+    # DAG wiring
+    [load_orders, load_customers, load_products] >> check_orders >> dbt_run >> dbt_test >> refresh_looker()
+
+pipeline()
+""", language="python")
+
+            st.markdown("#### Step 2 — dbt staging model + incremental load pattern")
+            st.code("""
+-- models/staging/stg_orders.sql
+{{ config(
+    materialized  = 'incremental',
+    unique_key    = 'order_line_id',
+    on_schema_change = 'sync_all_columns',
+    partition_by  = {'field': 'order_date', 'data_type': 'date'},
+) }}
+
+WITH source AS (
+    SELECT * FROM {{ source('raw', 'orders') }}
+    {% if is_incremental() %}
+    -- Only process today's partition on incremental runs
+    WHERE DATE(_partitiontime) = CURRENT_DATE()
+    {% endif %}
+),
+cleaned AS (
+    SELECT
+        GENERATE_UUID()                     AS order_line_id,
+        CAST(order_id    AS STRING)         AS order_id,
+        CAST(customer_id AS STRING)         AS customer_id,
+        DATE(order_date)                    AS order_date,
+        ROUND(SAFE_CAST(sales    AS FLOAT64), 2) AS sales,
+        ROUND(SAFE_CAST(profit   AS FLOAT64), 2) AS profit,
+        ROUND(SAFE_CAST(discount AS FLOAT64), 4) AS discount,
+        CURRENT_TIMESTAMP()                 AS _dbt_loaded_at,
+        ROW_NUMBER() OVER (
+            PARTITION BY order_id, product_id ORDER BY _loaded_at DESC
+        )                                   AS dedup_rank
+    FROM source
+)
+SELECT * EXCEPT (dedup_rank)
+FROM cleaned
+WHERE dedup_rank = 1
+""", language="sql")
+
+            st.markdown("#### Step 3 — dbt schema.yml: tests, descriptions & freshness")
+            st.code("""
+# models/staging/sources.yml
+version: 2
+
+sources:
+  - name: raw
+    database: analytics-project
+    schema: raw
+    freshness:
+      warn_after:  {count: 12, period: hour}
+      error_after: {count: 24, period: hour}
+    loaded_at_field: _partitiontime
+
+    tables:
+      - name: orders
+        description: Raw order data loaded from GCS by Airflow daily
+        columns:
+          - name: order_id
+            tests: [not_null]
+          - name: sales
+            tests:
+              - not_null
+              - accepted_range: {min_value: 0}
+          - name: discount
+            tests:
+              - accepted_range: {min_value: 0, max_value: 1}
+
+# models/marts/mart_orders.yml
+models:
+  - name: mart_orders
+    description: >
+      Wide, flat orders table for BI consumption.
+      Grain: one row per order line item.
+      Partitioned by order_month, clustered by region + category.
+    columns:
+      - name: order_id
+        tests: [not_null, unique]
+      - name: profit_margin
+        tests:
+          - accepted_range: {min_value: -1, max_value: 1}
+      - name: discount_band
+        tests:
+          - accepted_values:
+              values: ['No Discount','0–10%','10–20%','20–30%','30%+']
+      - name: customer_id
+        tests:
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+""", language="yaml")
+
+
 elif "Skills" in page:
     st.markdown("## Technical skills")
 
