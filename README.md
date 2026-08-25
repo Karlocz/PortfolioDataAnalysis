@@ -1,162 +1,299 @@
-# Carlos Maximino — Data Analyst Portfolio
+# Carlos Maximino — Technology, Operations & Data Analytics
 
-> Transforming operational, service, and business performance data into dashboards, executive reports, and decision-ready insights.
+> Technology and Operations professional with 12+ years of experience connecting people, operations, service performance, and data-driven decision-making.
 
 ---
 
 ## About me
 
-I am a Data and Analytics professional with **10+ years of progressive experience** across enterprise IT operations, service delivery, team leadership, and business performance reporting — currently working as a **Data Analyst at Kyndryl**, supporting Delta Air Lines stakeholders.
+I am a Technology professional with **12+ years of progressive experience** across enterprise IT Operations, Mainframe Support, Service Delivery, Agile coordination, People Leadership, Performance Management, and Data Analytics.
 
-My career didn't start in analytics. It started on the floor of a mainframe operations center, monitoring 24 clients, managing 15 failed jobs per day, and learning what it means when data is wrong and production stops. From there I moved into agile coordination, service delivery, team leadership (40 people), and finally into analytics — where I now use all of that operational context to ask better questions and build more useful reports.
+My career started on the floor of a Mainframe Operations center, supporting critical environments, monitoring multiple clients, managing production incidents, and learning firsthand what happens when systems, processes, and operational decisions fail.
 
-That background shapes how I work: I don't just build dashboards, I understand the operational reality behind the numbers.
+Over the years, I progressed from hands-on Operations into broader responsibilities involving **process improvement, Agile coordination, Service Delivery, stakeholder management, and team leadership**.
 
-**Career path:** Mainframe Operations → Agile / Scrum Master → Service Delivery → Team Leadership → Data Analytics
+As a **Team Leader**, I led approximately **40 professionals** supporting critical Mainframe environments. My responsibilities included performance management, operational priorities, incidents, escalations, KPIs, SLAs, training, professional development, documentation, and communication across technical teams, management, stakeholders, and client executives.
+
+Today, I work as a **Data Analyst at Kyndryl**, focusing on **Service Performance, KPIs, Business Insights, Power BI, automation, SharePoint solutions, and operational data analysis**.
+
+My background gives me a perspective that goes beyond dashboards and reports.
+
+I understand the operational reality behind the numbers.
+
+I use data not only to explain **what happened**, but to help identify risks, opportunities, performance gaps, and actions that can improve operations and decision-making.
+
+**Career path:**
+
+`Mainframe Operations → Agile / Scrum Coordination → Service Delivery → Team Leadership → Data Analytics`
 
 ---
 
-## What's in this portfolio
+## Leadership & Operations Experience
 
-Ten end-to-end projects covering data analysis, business intelligence, statistical analysis, and data engineering. Each one starts with a business problem and ends with a concrete recommendation.
+My professional experience combines technical knowledge with people, process, and performance management.
 
-Projects can be filtered by technology directly in the app: `SQL` · `Python` · `Power BI` · `R` · `dbt` · `Airflow` · `BigQuery` · `HTML/JS`
+### People Leadership
+
+- Led approximately **40 professionals** supporting critical Mainframe environments.
+- Supported professional development, training, onboarding, and knowledge sharing.
+- Managed operational priorities and helped teams navigate complex incidents and escalations.
+- Worked with management and HR on people-related matters.
+- Supported experienced and new professionals in solving operational and technical challenges.
+
+### Operations & Service Management
+
+- Experience supporting critical enterprise environments and services.
+- Incident, problem, escalation, and operational risk management.
+- KPI and SLA monitoring.
+- Performance and capacity management.
+- Service continuity and operational governance.
+- Process standardization and continuous improvement.
+- PIM documentation management and operational knowledge organization.
+
+### Stakeholder & Client Management
+
+- Acted as a bridge between Operations teams, technical teams, management, and stakeholders.
+- Supported communication and alignment during operational issues and escalations.
+- Interfaced with **Delta Air Lines client executives** when required to support alignment and resolution of relevant situations.
+- Translated operational information into actionable insights for management and stakeholders.
 
 ---
 
-### 01 · E-commerce Funnel Optimization
+## Data & Analytics
+
+Data Analytics is an important part of how I approach Operations and decision-making.
+
+My experience includes:
+
+- Executive and operational dashboards using **Power BI**.
+- KPI and SLA analysis.
+- Service Performance monitoring.
+- Business and operational reporting.
+- Data analysis and Business Insights.
+- Process automation using **Power Automate**.
+- Data transformation using **Excel and Power Query**.
+- Information management and solutions using **SharePoint**.
+- Supporting management decisions through data-driven insights.
+
+I believe the best analysis happens when data knowledge is combined with an understanding of the business and operational context behind it.
+
+---
+
+# Portfolio Projects
+
+This portfolio contains end-to-end projects covering **Data Analysis, Business Intelligence, Statistical Analysis, Data Engineering, and operational decision-making**.
+
+Each project starts with a business or operational problem and ends with insights, findings, or recommendations.
+
+Projects can be filtered by technology:
+
+`SQL` · `Python` · `Power BI` · `R` · `dbt` · `Airflow` · `BigQuery` · `HTML/JS`
+
+---
+
+## 01 · E-commerce Funnel Optimization
+
 `SQL` `Power BI` `Python`
 
-Identified where users abandon the purchase journey and quantified the revenue opportunity at each drop-off point. Segmented by device and acquisition channel to pinpoint that mobile users dropped off 2.3× more at the cart-to-checkout step — traced to a non-responsive UI on iOS.
+Identified where users abandon the purchase journey and quantified the revenue opportunity at each drop-off point. Segmented by device and acquisition channel to pinpoint that mobile users dropped off **2.3× more** at the cart-to-checkout step.
 
-**Estimated impact:** +1.5 p.p. checkout conversion → ~$48K/month in additional revenue.
+**Estimated impact:**
+
++1.5 p.p. checkout conversion → ~$48K/month in additional revenue.
 
 ---
 
-### 02 · Customer Churn Analysis
+## 02 · Customer Churn Analysis
+
 `Python`
 
-Built 12-month retention cohorts for a SaaS company with 6.2% monthly churn. Segmented by plan type and early engagement behaviour, then developed a simple logistic-regression risk score to flag at-risk accounts for proactive outreach.
+Built 12-month retention cohorts for a SaaS company with **6.2% monthly churn**.
 
-**Key finding:** Customers on monthly plans who logged in fewer than 3 times in their first 30 days churned at 4× the rate of highly engaged users.
+Segmented customers by plan type and early engagement behaviour and developed a logistic-regression risk score to identify at-risk accounts.
 
-**Estimated impact:** Reducing churn from 6.2% → 5.4% preserves ~$120K ARR per quarter.
+**Key finding:**
+
+Customers on monthly plans who logged in fewer than 3 times during their first 30 days churned at **4× the rate** of highly engaged users.
+
+**Estimated impact:**
+
+Reducing churn from 6.2% → 5.4% preserves approximately **$120K ARR per quarter**.
 
 ---
 
-### 03 · Marketing Efficiency — CAC / LTV
+## 03 · Marketing Efficiency — CAC / LTV
+
 `SQL` `Python`
 
-Consolidated spend and revenue data across 5 acquisition channels, calculated per-channel CAC and LTV, and modeled payback periods. Found that organic search delivered 3× higher LTV/CAC ratio than paid social despite receiving only 12% of the budget.
+Consolidated spend and revenue data across 5 acquisition channels and calculated CAC, LTV, and payback periods.
 
-**Estimated impact:** Reallocating 18% of paid budget could improve blended ROAS by 12%.
+**Key finding:**
 
----
+Organic search delivered a **3× higher LTV/CAC ratio** than paid social despite receiving only 12% of the budget.
 
-### 04 · Operations & Demand Forecasting
-`Python`
+**Estimated impact:**
 
-Modeled ticket volume with a 7-day rolling average and seasonal adjustment to support weekly staffing decisions. Identified strong Monday/Tuesday peaks that were being systematically ignored, leading to recurring SLA breaches at the start of the week.
-
-**Estimated impact:** Forecast-driven staffing may reduce SLA breaches by 9–14%.
+Reallocating 18% of paid budget could improve blended ROAS by **12%**.
 
 ---
 
-### 05 · Global Superstore — Profitability & Segmentation
+## 04 · Operations & Demand Forecasting
+
 `Python`
 
-End-to-end exploratory analysis of 51,290 transaction rows across 147 countries (2011–2014). Engineered Profit Margin, Shipping Cost Ratio, and Discount Band metrics to surface where the business was silently losing money.
+Modeled ticket volume using rolling averages and seasonal patterns to support staffing and capacity decisions.
+
+**Key finding:**
+
+Strong Monday and Tuesday demand peaks were systematically underestimated, contributing to recurring SLA breaches.
+
+**Estimated impact:**
+
+Forecast-driven staffing may reduce SLA breaches by **9–14%**.
+
+---
+
+## 05 · Global Superstore — Profitability & Segmentation
+
+`Python`
+
+End-to-end exploratory analysis of **51,290 transaction rows across 147 countries**.
+
+Created Profit Margin, Shipping Cost Ratio, and Discount Band metrics to identify areas where the business was losing profitability.
 
 **Key findings:**
-- Discounts above 20% produce negative average margins — the clearest margin leak in the dataset
-- Central and South regions have disproportionately high shipping cost ratios
-- Tables and Bookcases consistently destroy margin regardless of channel or segment
+
+- Discounts above 20% produce negative average margins.
+- Central and South regions have disproportionately high shipping cost ratios.
+- Tables and Bookcases consistently destroy margin regardless of channel or segment.
 
 ---
 
-### 06 · CineGraph — Cinema & TV Analytics
+## 06 · CineGraph — Cinema & TV Analytics
+
 `HTML/JS`
 
-A fully custom analytics dashboard built in pure HTML and JavaScript, analyzing 20,000+ films and 15,000+ TV series from TMDB. Covers genre financial performance, rating trends across decades, language distribution, extreme ROI outliers, and director efficiency benchmarks.
+A custom analytics dashboard built with HTML and JavaScript, analyzing **20,000+ films and 15,000+ TV series**.
 
-**Key findings:**
-- Animation returns $3.7 for every $1 spent — the highest revenue multiplier of any genre
-- Pre-1980 films show inflated ratings due to survivorship bias
-- Martin Scorsese achieves the highest avg rating (★ 7.27) among directors with 25+ films
+The project explores genre financial performance, rating trends, language distribution, ROI outliers, and director efficiency.
 
 ---
 
-### 07 · HR Analytics Dashboard
+## 07 · HR Analytics Dashboard
+
 `Power BI`
 
-Modeled People data for 2,800 employees over 5 years in Power BI with a star schema and DAX measures. Built a self-service dashboard covering attrition drivers, headcount evolution, hiring pipeline, and performance distribution — designed so HR managers can filter without requesting reports from the data team.
+Modeled people data for **2,800 employees over 5 years** using Power BI, star schema modeling, and DAX measures.
+
+Built a self-service dashboard covering:
+
+- Attrition drivers.
+- Headcount evolution.
+- Hiring pipeline.
+- Performance distribution.
 
 **Key findings:**
-- Engineering attrition (18.4%) is 2.3× the company average (8.0%)
-- 62% of departures come from employees with fewer than 2 years tenure — pointing to onboarding gaps, not compensation
-- High performers (Band 4–5) are leaving at nearly the same rate as low performers — a U-shaped attrition curve
+
+- Engineering attrition reached **18.4%**, compared with an 8.0% company average.
+- **62% of departures** came from employees with fewer than 2 years of tenure.
+- High performers were leaving at rates similar to low performers.
 
 ---
 
-### 08 · Data Warehouse Design & SQL Optimization
+## 08 · Data Warehouse Design & SQL Optimization
+
 `SQL` `BigQuery`
 
-Redesigned a flat-file reporting environment (12 unjoined CSVs in BigQuery) into a 3-layer Medallion architecture (Raw → Staging → Marts) using modular SQL CTEs and incremental load patterns. Added data quality checks and documented every table's grain and update frequency.
+Redesigned a reporting environment containing 12 disconnected CSV sources into a structured **Medallion architecture**:
+
+`Raw → Staging → Marts`
+
+Implemented modular SQL transformations, incremental loading patterns, and data quality checks.
 
 **Results:**
-- Avg query execution time: **4h 12min → 7min 43sec** after materialized mart tables
-- 98.7% data quality score across 14 monitored tables (vs no monitoring before)
-- Eliminated 4 conflicting revenue definitions — one source of truth across the company
+
+- Query execution: **4h 12min → 7min 43sec**
+- **98.7% data quality score** across 14 monitored tables.
+- Eliminated 4 conflicting revenue definitions.
 
 ---
 
-### 09 · A/B Testing & Regression — Statistical Rigour in R
+## 09 · A/B Testing & Regression
+
 `R`
 
-Rebuilt a flawed product experimentation from scratch after the team declared a "significant" result based on a 4-day underpowered test. Ran a proper two-sample t-test with pre-calculated sample size (n=12,400/group), defined metrics before launch, and applied Bonferroni correction for multiple comparisons. Also ran logistic regression to identify the true conversion drivers.
+Rebuilt a flawed experimentation analysis using statistical testing, sample size calculations, multiple comparison correction, and logistic regression.
 
 **Key findings:**
-- The original "significant" result had p = 0.31 under correct analysis — it was noise
-- The confirmed lift (p = 0.018) was real but below the minimum detectable effect for the company's cost of change: **recommendation was not to ship**
-- Device type (mobile vs desktop) was 4× stronger a predictor of conversion than the UI variant
+
+- The original "significant" result was actually statistical noise.
+- Device type was a stronger predictor of conversion than the tested UI variation.
+- The final recommendation was **not to ship the change**, despite statistical significance in one result.
+
+This project demonstrates an important principle in decision-making:
+
+> Statistical significance does not automatically mean business value.
 
 ---
 
-### 10 · ETL Pipeline — Apache Airflow + dbt + BigQuery
+## 10 · ETL Pipeline — Apache Airflow + dbt + BigQuery
+
 `Airflow` `dbt` `BigQuery`
 
-Replaced a 6-hour manual pipeline that failed silently with a fully orchestrated, testable, and documented system. Apache Airflow for scheduling and orchestration, dbt for modular transformation logic with data lineage and 142 automated tests, BigQuery for partitioned/clustered storage, and Slack alerting for instant failure notification.
+Replaced a manual data pipeline with an orchestrated, testable, and documented workflow.
+
+**Architecture:**
+
+`Apache Airflow → dbt → BigQuery`
+
+Implemented automated testing, data lineage, monitoring, and failure alerting.
 
 **Results:**
-- Pipeline runtime: **6h manual → 43min automated**, running daily at 05:00 UTC
-- Mean time to detect failure: **4+ hours → under 3 minutes** (Slack alert with task and error)
-- dbt test suite: 142 tests across 37 models, 98.6% pass rate on production data
-- Data freshness SLA: 99.1% of mornings with fresh data before 06:00 UTC (target: 95%)
+
+- Pipeline runtime: **6h manual → 43min automated**
+- Failure detection: **4+ hours → under 3 minutes**
+- **142 automated tests** across 37 models.
+- **99.1% data freshness SLA** before 06:00 UTC.
 
 ---
 
-## Technical stack
+# Core Competencies
 
-| Area | Tools |
+| Area | Experience |
 |---|---|
-| Analytics & Reporting | Excel (Advanced), KPI/SLA Analysis, Operational Reporting |
-| Languages | SQL, Python (Pandas, Plotly, Streamlit), R (tidyverse, broom, pwr) |
-| Visualization & BI | Power BI (DAX, star schema), Tableau, Chart.js, Plotly |
-| Data Engineering | Apache Airflow, dbt, BigQuery, ETL pipelines, Medallion architecture |
-| Service Management | ServiceNow, ITIL |
-| Cloud & Platforms | Google Cloud, Databricks, Neo4j |
-| Languages spoken | Portuguese (native) · English (B2) · Spanish (professional) |
+| Leadership | People Leadership, Team Development, Training, Performance Management |
+| Operations | Operations Management, Critical Environments, Service Continuity |
+| Service Management | ITIL, Incident Management, Escalation Management, SLA Management |
+| Performance | KPIs, SLAs, Service Performance, Operational Analytics |
+| Stakeholders | Stakeholder Management, Client Communication, Cross-functional Collaboration |
+| Data & BI | Power BI, Excel, Power Query, KPI Analysis, Business Insights |
+| Automation | Power Automate, Process Automation |
+| Analytics | SQL, Python, R, Statistical Analysis |
+| Data Engineering | dbt, Apache Airflow, BigQuery, ETL, Medallion Architecture |
+| Cloud & Platforms | Google Cloud, Databricks, Neo4j, SharePoint, ServiceNow |
+| AI Productivity | Applied use of AI tools to improve productivity, analysis, documentation, and daily workflows |
 
 ---
 
-## Certifications (selected)
+# Certifications
 
-- Neo4j Graph Data Science Certification — Apr 2026
-- Neo4j Certified Professional — Apr 2026
-- Databricks Lakehouse Fundamentals — Apr 2026
-- Data Analytics Essentials — Cisco, Sep 2025
-- Cloud Digital Leader — Google, Feb 2024
-- ITIL Foundation — AXELOS, Dec 2016
+- **Professional Scrum Master I (PSM I)** — Scrum.org
+- **ITIL® Foundation Certificate in IT Service Management** — AXELOS
+- **Google Cloud Digital Leader** — Google Cloud
+- **Data Analytics Essentials** — Cisco
+- **Databricks Fundamentals** — Databricks
+- **Neo4j Certified Professional** — Neo4j
+- **Neo4j Graph Data Science Certification** — Neo4j
+- **AI Governance with ITIL 5** — TI Exames
+- **ISO/IEC 42005: AI Impact Assessment in Practice** — TI Exames
+
+---
+
+# Languages
+
+- 🇧🇷 Portuguese — Native
+- 🇺🇸 English — C1 / Advanced
+- 🇪🇸 Spanish — C1 / Advanced
 
 ---
 
@@ -164,5 +301,5 @@ Replaced a 6-hour manual pipeline that failed silently with a fully orchestrated
 
 - **LinkedIn:** [linkedin.com/in/carlos-maximino](https://www.linkedin.com/in/carlos-maximino/)
 - **Email:** cmax15@outlook.com.br
-- **Location:** Brazil (Campinas region) — open to remote and relocation
-
+- **Location:** Campinas region, São Paulo, Brazil
+- **Availability:** Open to remote, hybrid, and relocation opportunities
